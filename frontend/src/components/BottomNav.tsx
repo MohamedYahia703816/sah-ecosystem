@@ -17,7 +17,7 @@ export function BottomNav() {
   
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50">
-      <div className="glass-card mx-2 mb-2 px-2 py-2">
+      <div className="glass-card mx-2 mb-3 px-2 py-2">
         <div className="flex justify-around items-center">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path
@@ -25,23 +25,17 @@ export function BottomNav() {
               <motion.button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 ${
+                className={`flex flex-col items-center gap-1 px-2 py-2 rounded-lg transition-all duration-200 ${
                   isActive ? 'text-gold' : 'text-text-secondary'
                 }`}
                 whileTap={{ scale: 0.9 }}
               >
                 <item.icon 
-                  size={22} 
+                  size={20} 
                   strokeWidth={isActive ? 2.5 : 2}
                   className={isActive ? 'glow-gold' : ''}
                 />
-                <span className="text-xs font-medium">{item.label}</span>
-                {isActive && (
-                  <motion.div
-                    className="absolute -top-1 w-8 h-1 bg-gold rounded-full"
-                    layoutId="activeNav"
-                  />
-                )}
+                <span className="text-[10px] font-medium leading-none">{item.label}</span>
               </motion.button>
             )
           })}

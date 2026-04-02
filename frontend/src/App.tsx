@@ -7,6 +7,7 @@ import { BoostersScreen } from './screens/BoostersScreen'
 import { TasksScreen } from './screens/TasksScreen'
 import { LeaderboardScreen } from './screens/LeaderboardScreen'
 import { WalletScreen } from './screens/WalletScreen'
+import { AdminScreen } from './screens/AdminScreen'
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             <Route path="/tasks" element={<TasksScreen />} />
             <Route path="/leaderboard" element={<LeaderboardScreen />} />
             <Route path="/wallet" element={<WalletScreen />} />
+            <Route path="/admin" element={<AdminScreen />} />
           </Routes>
           <BottomNav />
         </div>

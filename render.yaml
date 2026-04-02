@@ -1,0 +1,22 @@
+{
+  "services": [
+    {
+      "name": "sah-music-bot",
+      "env": "node",
+      "region": "frankfurt",
+      "buildCommand": "cd bot && npm install",
+      "startCommand": "cd bot && node index.js",
+      "envVars": [
+        {
+          "key": "BOT_TOKEN",
+          "value": "8617424300:AAGe4mJ7yHWCTmgBzb1DQ7cEw8UAYw0FFqQ"
+        },
+        {
+          "key": "WEBAPP_URL",
+          "value": "https://frontend-au1jxeci0-sonic-architect-hub.vercel.app"
+        }
+      ],
+      "plan": "free"
+    }
+  ]
+}

@@ -17,7 +17,11 @@ export async function initUser(userId: string, username?: string, firstName?: st
 }
 
 export async function getUser(userId: string) {
-  const { data, error } = await supabase.from('users').select('*').eq('id', userId).single()
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .single()
   if (error && error.code !== 'PGRST116') throw error
   return data
 }
@@ -97,44 +101,6 @@ export async function getVideoTasks() {
     .eq('is_active', true)
   if (error) throw error
   return data || []
-}
-
-export async function redeemPromoCode(userId: string, code: string) {
-  const { data: promoData, error: promoError } = await supabase
-    .from('promo_codes')
-    .select('*')
-    .eq('code', code.toUpperCase())
-    .eq('is_active', true)
-    .single()
-  
-  if (promoError || !promoData) return { success: false, error: 'Invalid promo code' }
-  
-  if (promoData.expires_at && new Date(promoData.expires_at) < new Date()) {
-    return { success: false, error: 'Promo code has expired' }
-  }
-  
-  if (promoData.used_count >= promoData.max_uses) {
-    return { success: false, error: 'Promo code is fully used' }
-  }
-  
-  const { data: usageData } = await supabase
-    .from('promo_usage')
-    .select('*')
-    .eq('promo_code_id', promoData.id)
-    .eq('user_id', userId)
-    .single()
-  
-  if (usageData) return { success: false, error: 'You already used this code' }
-  
-  if (promoData.type === 'unique' && promoData.used_count > 0) {
-    return { success: false, error: 'This unique code has already been used' }
-  }
-  
-  await supabase.from('promo_usage').insert({ promo_code_id: promoData.id, user_id: userId })
-  
-  await supabase.rpc('update_user_balance', { p_user_id: userId, p_amount: promoData.reward_value })
-  
-  return { success: true, type: promoData.type, reward: promoData.reward_value, duration: promoData.boost_duration_hours }
 }
 
 export async function getLeaderboard(limit = 50) {

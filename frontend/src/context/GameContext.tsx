@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { supabase, getUser, updateUser, getInventory, getBoosters, getTasks as fetchTasks, completeTask as completeTaskDb, addToInventory as addToInventoryDb, updateBooster as updateBoosterDb } from '../lib/supabase'
 import { getTelegramUserId, initTelegram, notifyHapticFeedback } from '../lib/telegram'
 import { boosters as boostersData, genres } from '../data/gameData'
@@ -30,7 +30,6 @@ interface GameState {
 }
 
 interface GameContextType extends GameState {
-  claimPassiveIncome: () => Promise<number>
   purchaseInstrument: (genre: string, level: number) => Promise<boolean>
   purchaseBooster: (boosterType: string) => Promise<boolean>
   completeTask: (taskType: string, reward: number) => Promise<boolean>
@@ -58,7 +57,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     error: null,
   })
 
-  const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const balanceAccumulatorRef = useRef(0)
+  const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     initTelegram()
@@ -71,25 +71,25 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     loadUserData(userId)
   }, [])
 
-  useEffect(() => {
-    if (state.userId && state.profitPerHour > 0) {
-      syncIntervalRef.current = setInterval(() => {
-        syncBalance()
-      }, 30000)
+  const scheduleSync = useCallback(() => {
+    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current)
+    syncTimeoutRef.current = setTimeout(() => {
+      syncBalance()
+    }, 10000)
+  }, [state.userId, state.balance])
+
+  const syncBalance = useCallback(async () => {
+    if (!state.userId || state.balance <= 0) return
+    try {
+      await updateUser(state.userId, { balance: state.balance, last_claim: new Date().toISOString() })
+    } catch (err) {
+      console.error('Sync error:', err)
     }
-    return () => {
-      if (syncIntervalRef.current) clearInterval(syncIntervalRef.current)
-    }
-  }, [state.userId, state.profitPerHour])
+  }, [state.userId, state.balance])
 
   const loadUserData = async (userId: string) => {
     try {
-      const [user, inventory, boosters, tasks] = await Promise.all([
-        getUser(userId),
-        getInventory(userId),
-        getBoosters(userId),
-        fetchTasks(userId),
-      ])
+      const user = await getUser(userId)
 
       if (!user) {
         await supabase.from('users').insert({
@@ -100,30 +100,62 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           owned_genres: [],
           last_claim: new Date().toISOString(),
         })
+
+        setState(prev => ({
+          ...prev,
+          balance: 0,
+          profitPerHour: 0,
+          boostMultiplier: 1.0,
+          selectedGenre: null,
+          ownedGenres: [],
+          inventory: [],
+          boosters: [],
+          completedTasks: [],
+          lastClaim: new Date(),
+          lastDailyBonus: null,
+          isLoading: false,
+        }))
+        return
       }
 
-      const userData = user || { balance: 0, profit_per_hour: 0, boost_multiplier: 1.0, selected_genre: null, owned_genres: [], last_claim: null, last_daily_bonus: null }
-      
+      const [inventory, boosters, tasks] = await Promise.all([
+        getInventory(userId),
+        getBoosters(userId),
+        fetchTasks(userId),
+      ])
+
       let passiveEarnings = 0
-      if (userData.last_claim && userData.profit_per_hour > 0) {
-        const hoursPassed = Math.min((Date.now() - new Date(userData.last_claim).getTime()) / (1000 * 60 * 60), 24)
-        passiveEarnings = Math.floor(hoursPassed * userData.profit_per_hour * (userData.boost_multiplier || 1.0))
+      if (user.last_claim && user.profit_per_hour > 0) {
+        const msPassed = Date.now() - new Date(user.last_claim).getTime()
+        const hoursPassed = Math.min(msPassed / (1000 * 60 * 60), 24)
+        passiveEarnings = Math.floor(hoursPassed * user.profit_per_hour * (user.boost_multiplier || 1.0))
       }
 
-      const totalBalance = (userData.balance || 0) + passiveEarnings
+      const totalBalance = (user.balance || 0) + passiveEarnings
+
+      const completedTaskIds = tasks
+        .filter(t => {
+          if (!t.completed) return false
+          if (t.task_type === 'daily_bonus' && t.completed_at) {
+            const hoursSince = (Date.now() - new Date(t.completed_at).getTime()) / (1000 * 60 * 60)
+            return hoursSince < 24
+          }
+          return true
+        })
+        .map(t => t.task_type)
 
       setState(prev => ({
         ...prev,
         balance: totalBalance,
-        profitPerHour: userData.profit_per_hour || 0,
-        boostMultiplier: userData.boost_multiplier || 1.0,
-        selectedGenre: userData.selected_genre || null,
-        ownedGenres: userData.owned_genres || [],
+        profitPerHour: user.profit_per_hour || 0,
+        boostMultiplier: user.boost_multiplier || 1.0,
+        selectedGenre: user.selected_genre || null,
+        ownedGenres: user.owned_genres || [],
         inventory: inventory.map(i => ({ genre: i.genre, level: i.level })),
         boosters: boosters.map(b => ({ boosterType: b.booster_type, level: b.level })),
-        completedTasks: tasks.filter(t => t.completed).map(t => t.task_type),
-        lastClaim: userData.last_claim ? new Date(userData.last_claim) : null,
-        lastDailyBonus: userData.last_daily_bonus ? new Date(userData.last_daily_bonus) : null,
+        completedTasks: completedTaskIds,
+        lastClaim: user.last_claim ? new Date(user.last_claim) : null,
+        lastDailyBonus: user.last_daily_bonus ? new Date(user.last_daily_bonus) : null,
         isLoading: false,
       }))
 
@@ -136,33 +168,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const syncBalance = async () => {
-    if (!state.userId) return
-    try {
-      await updateUser(state.userId, { balance: state.balance, last_claim: new Date().toISOString() })
-    } catch (err) {
-      console.error('Sync error:', err)
-    }
-  }
-
-  const claimPassiveIncome = useCallback(async (): Promise<number> => {
-    if (!state.userId) return 0
-    try {
-      await updateUser(state.userId, { last_claim: new Date().toISOString() })
-      setState(prev => ({ ...prev, lastClaim: new Date() }))
-      return 0
-    } catch (err: any) {
-      console.error('Claim error:', err)
-      return 0
-    }
-  }, [state.userId])
-
   const purchaseInstrument = useCallback(async (genre: string, level: number): Promise<boolean> => {
     if (!state.userId) return false
-    
+
     const genreData = genres.find(g => g.id === genre)
     if (!genreData) return false
-    
+
     const levelData = genreData.levels.find(l => l.level === level)
     if (!levelData) return false
 
@@ -171,15 +182,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const alreadyOwned = state.inventory.some(i => i.genre === genre && i.level === level)
     if (alreadyOwned) return false
 
+    const prevLevelOwned = level === 1 || state.inventory.some(i => i.genre === genre && i.level === level - 1)
+    if (!prevLevelOwned) return false
+
     try {
       notifyHapticFeedback('medium')
-      
-      await addToInventoryDb(state.userId, genre, level)
 
       const newProfitPerHour = state.profitPerHour + levelData.profitPerHour
       const newBalance = state.balance - levelData.price
       const newOwnedGenres = state.ownedGenres.includes(genre) ? state.ownedGenres : [...state.ownedGenres, genre]
       const newInventory = [...state.inventory, { genre, level }]
+
+      await addToInventoryDb(state.userId, genre, level)
 
       await updateUser(state.userId, {
         balance: newBalance,
@@ -195,23 +209,24 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         inventory: newInventory,
       }))
 
+      scheduleSync()
       return true
     } catch (err: any) {
       console.error('Purchase error:', err)
       setState(prev => ({ ...prev, error: err.message }))
       return false
     }
-  }, [state.userId, state.balance, state.profitPerHour, state.inventory, state.ownedGenres])
+  }, [state.userId, state.balance, state.profitPerHour, state.inventory, state.ownedGenres, scheduleSync])
 
   const purchaseBooster = useCallback(async (boosterType: string): Promise<boolean> => {
     if (!state.userId) return false
-    
+
     const boosterData = boostersData.find(b => b.id === boosterType)
     if (!boosterData) return false
 
     const currentBooster = state.boosters.find(b => b.boosterType === boosterType)
     const currentLevel = currentBooster?.level || 0
-    
+
     if (currentLevel >= boosterData.maxLevel) return false
 
     const cost = Math.floor(boosterData.baseCost * Math.pow(boosterData.costMultiplier, currentLevel))
@@ -219,12 +234,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
     try {
       notifyHapticFeedback('medium')
-      
-      await updateBoosterDb(state.userId, boosterType, currentLevel + 1)
 
       const bonus = boosterData.bonusPerLevel[currentLevel]
-      const newBoostMultiplier = state.boostMultiplier + bonus
+      const newBoostMultiplier = parseFloat((state.boostMultiplier + bonus).toFixed(4))
       const newBalance = state.balance - cost
+
+      await updateBoosterDb(state.userId, boosterType, currentLevel + 1)
 
       await updateUser(state.userId, {
         balance: newBalance,
@@ -240,30 +255,31 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           : [...prev.boosters, { boosterType, level: currentLevel + 1 }],
       }))
 
+      scheduleSync()
       return true
     } catch (err: any) {
       console.error('Booster purchase error:', err)
       setState(prev => ({ ...prev, error: err.message }))
       return false
     }
-  }, [state.userId, state.balance, state.boostMultiplier, state.boosters])
+  }, [state.userId, state.balance, state.boostMultiplier, state.boosters, scheduleSync])
 
   const completeTask = useCallback(async (taskType: string, reward: number): Promise<boolean> => {
     if (!state.userId) return false
-    
+
     if (state.completedTasks.includes(taskType)) return false
 
     try {
-      notifyHapticFeedback('success' as any)
-      
-      await completeTaskDb(state.userId, taskType)
+      notifyHapticFeedback('medium')
 
       const newBalance = state.balance + reward
       const newCompletedTasks = [...state.completedTasks, taskType]
 
+      await completeTaskDb(state.userId, taskType)
+
       await updateUser(state.userId, {
         balance: newBalance,
-        last_daily_bonus: taskType === 'daily_bonus' ? new Date().toISOString() : undefined,
+        ...(taskType === 'daily_bonus' && { last_daily_bonus: new Date().toISOString() }),
       })
 
       setState(prev => ({
@@ -273,13 +289,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         lastDailyBonus: taskType === 'daily_bonus' ? new Date() : prev.lastDailyBonus,
       }))
 
+      scheduleSync()
       return true
     } catch (err: any) {
       console.error('Task completion error:', err)
       setState(prev => ({ ...prev, error: err.message }))
       return false
     }
-  }, [state.userId, state.balance, state.completedTasks])
+  }, [state.userId, state.balance, state.completedTasks, scheduleSync])
 
   const selectGenre = useCallback(async (genre: string) => {
     if (!state.userId) return
@@ -293,7 +310,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const redeemPromoCode = useCallback(async (code: string): Promise<{ success: boolean; message: string; reward?: number }> => {
     if (!state.userId) return { success: false, message: 'User not authenticated' }
-    
+
     const trimmedCode = code.trim().toUpperCase()
     if (!trimmedCode) return { success: false, message: 'Please enter a code' }
 
@@ -304,43 +321,41 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         .eq('code', trimmedCode)
         .eq('is_active', true)
         .single()
-      
+
       if (promoError || !promoData) {
         return { success: false, message: 'Invalid promo code' }
       }
-      
+
       if (promoData.expires_at && new Date(promoData.expires_at) < new Date()) {
         return { success: false, message: 'This promo code has expired' }
       }
-      
+
       if (promoData.used_count >= promoData.max_uses) {
         return { success: false, message: 'This promo code has been fully used' }
       }
-      
+
       const { data: usageData } = await supabase
         .from('promo_usage')
         .select('*')
         .eq('promo_code_id', promoData.id)
         .eq('user_id', state.userId)
         .single()
-      
+
       if (usageData) {
         return { success: false, message: 'You have already used this code' }
       }
-      
+
       if (promoData.type === 'unique' && promoData.used_count > 0) {
         return { success: false, message: 'This unique code has already been claimed' }
       }
 
-      await supabase.from('promo_usage').insert({ 
-        promo_code_id: promoData.id, 
-        user_id: state.userId 
+      await supabase.from('promo_usage').insert({
+        promo_code_id: promoData.id,
+        user_id: state.userId
       })
 
       try {
-        await supabase.rpc('update_promo_usage', { 
-          p_code_id: promoData.id 
-        })
+        await supabase.rpc('update_promo_usage', { p_code_id: promoData.id })
       } catch {
         await supabase.from('promo_codes')
           .update({ used_count: promoData.used_count + 1 })
@@ -374,21 +389,49 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, [state.userId])
 
   useEffect(() => {
-    if (state.profitPerHour > 0) {
-      const interval = setInterval(() => {
+    if (state.profitPerHour <= 0) return
+
+    const earningsPerSecond = (state.profitPerHour * state.boostMultiplier) / 3600
+
+    const interval = setInterval(() => {
+      balanceAccumulatorRef.current += earningsPerSecond
+
+      if (balanceAccumulatorRef.current >= 1) {
+        const earned = Math.floor(balanceAccumulatorRef.current)
+        balanceAccumulatorRef.current -= earned
+
         setState(prev => ({
           ...prev,
-          balance: prev.balance + Math.floor(prev.profitPerHour * prev.boostMultiplier / 3600),
+          balance: prev.balance + earned,
         }))
-      }, 1000)
-      return () => clearInterval(interval)
+      }
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [state.profitPerHour, state.boostMultiplier])
+
+  useEffect(() => {
+    if (state.userId && state.balance > 0) {
+      scheduleSync()
     }
-  }, [state.profitPerHour])
+  }, [state.userId, state.balance, scheduleSync])
+
+  useEffect(() => {
+    window.addEventListener('beforeunload', syncBalance)
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        syncBalance()
+      }
+    })
+    return () => {
+      window.removeEventListener('beforeunload', syncBalance)
+      window.removeEventListener('visibilitychange', syncBalance)
+    }
+  }, [syncBalance])
 
   return (
     <GameContext.Provider value={{
       ...state,
-      claimPassiveIncome,
       purchaseInstrument,
       purchaseBooster,
       completeTask,

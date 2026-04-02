@@ -34,25 +34,25 @@ export function StoreScreen() {
     return (
       <div className="min-h-screen pb-24 px-4 pt-8">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <h1 className="text-3xl font-bold text-gradient-gold mb-2">Instrument Store</h1>
-          <p className="text-text-secondary">Choose a genre to start your journey</p>
+          <h1 className="text-2xl font-semibold text-gradient-gold mb-2">Instrument Store</h1>
+          <p className="text-text-secondary text-sm">Choose a genre to start your journey</p>
         </motion.div>
 
         <div className="grid grid-cols-2 gap-4">
           {genres.map((genre, index) => (
             <motion.div
               key={genre.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ delay: index * 0.08 }}
             >
               <GlassCard
                 hover
-                className="text-center cursor-pointer"
+                className="text-center cursor-pointer p-4"
                 onClick={() => {
                   setSelectedGenreId(genre.id)
                   if (!ownedGenres.includes(genre.id)) {
@@ -60,9 +60,9 @@ export function StoreScreen() {
                   }
                 }}
               >
-                <div className="text-4xl mb-3">{genre.icon}</div>
-                <h3 className="font-bold text-text-primary">{genre.name}</h3>
-                <p className="text-xs text-text-secondary mt-1">
+                <div className="text-3xl mb-3">{genre.icon}</div>
+                <h3 className="font-semibold text-text-primary text-sm">{genre.name}</h3>
+                <p className="text-[11px] text-text-secondary mt-1">
                   {ownedGenres.includes(genre.id) ? 'Owned' : 'Tap to select'}
                 </p>
               </GlassCard>
@@ -75,25 +75,22 @@ export function StoreScreen() {
 
   return (
     <div className="min-h-screen pb-24 px-4 pt-6">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-5">
         <button
           onClick={() => setSelectedGenreId('')}
-          className="text-text-secondary hover:text-text-primary transition-colors"
+          className="text-text-secondary hover:text-text-primary transition-colors text-sm"
         >
           ← Back
         </button>
-        <h1 className="text-2xl font-bold text-gradient-gold">{currentGenre?.name} Store</h1>
+        <h1 className="text-lg font-semibold text-gradient-gold">{currentGenre?.name} Store</h1>
       </div>
 
-      {/* Balance */}
-      <GlassCard className="mb-6 text-center">
-        <p className="text-sm text-text-secondary mb-1">Your Balance</p>
-        <p className="text-3xl font-bold text-gradient-gold">{balance.toLocaleString()} SAH</p>
+      <GlassCard className="mb-5 text-center p-4">
+        <p className="text-xs text-text-secondary mb-1">Your Balance</p>
+        <p className="text-2xl font-semibold text-gradient-gold">{balance.toLocaleString()} SAH</p>
       </GlassCard>
 
-      {/* Instruments */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {currentGenre?.levels.map((level, index) => {
           const unlocked = isLevelUnlocked(level.level)
           const owned = isLevelOwned(level.level)
@@ -103,41 +100,41 @@ export function StoreScreen() {
           return (
             <motion.div
               key={level.level}
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: -16 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ delay: index * 0.08 }}
             >
-              <GlassCard className={`${!unlocked ? 'opacity-50' : ''}`}>
-                <div className="flex items-center gap-4">
-                  <LevelBadge level={level.level} />
+              <GlassCard className={`${!unlocked ? 'opacity-40' : ''} p-4`}>
+                <div className="flex items-center gap-3">
+                  <LevelBadge level={level.level} size="sm" />
                   
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl">{level.icon}</span>
-                      <div>
-                        <h3 className="font-bold text-text-primary">{level.name}</h3>
-                        <p className="text-sm text-green-neon">+{level.profitPerHour}/hr</p>
+                      <span className="text-xl">{level.icon}</span>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-text-primary text-sm truncate">{level.name}</h3>
+                        <p className="text-xs text-emerald">+{level.profitPerHour}/hr</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="text-right">
+                  <div className="text-right flex-shrink-0">
                     {owned ? (
-                      <div className="flex items-center gap-1 text-green-neon">
-                        <Check size={18} />
-                        <span className="text-sm font-medium">Owned</span>
+                      <div className="flex items-center gap-1 text-emerald">
+                        <Check size={16} />
+                        <span className="text-xs font-medium">Owned</span>
                       </div>
                     ) : !unlocked ? (
                       <div className="flex items-center gap-1 text-text-secondary">
-                        <Lock size={16} />
-                        <span className="text-sm">Locked</span>
+                        <Lock size={14} />
+                        <span className="text-xs">Locked</span>
                       </div>
                     ) : (
                       <motion.button
-                        className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+                        className={`px-3 py-2 rounded-lg font-medium text-xs transition-all ${
                           canAfford
                             ? 'bg-gradient-to-r from-gold to-gold-dark text-bg-primary'
-                            : 'bg-bg-secondary text-text-secondary'
+                            : 'bg-bg-tertiary text-text-secondary'
                         }`}
                         disabled={!canAfford || isPurchasing}
                         whileTap={canAfford ? { scale: 0.95 } : {}}
