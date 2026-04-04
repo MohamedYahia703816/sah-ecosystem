@@ -62,9 +62,7 @@ export function LeaderboardScreen() {
         <button
           onClick={() => setTab('balance')}
           className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
-            tab === 'balance' 
-              ? 'bg-gradient-to-r from-gold to-gold-dark text-bg-primary' 
-              : 'glass-card text-text-secondary'
+            tab === 'balance' ? 'btn-gold' : 'glass-card text-text-secondary'
           }`}
         >
           By Balance
@@ -72,9 +70,7 @@ export function LeaderboardScreen() {
         <button
           onClick={() => setTab('profit')}
           className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
-            tab === 'profit' 
-              ? 'bg-gradient-to-r from-gold to-gold-dark text-bg-primary' 
-              : 'glass-card text-text-secondary'
+            tab === 'profit' ? 'btn-gold' : 'glass-card text-text-secondary'
           }`}
         >
           By Profit/hr

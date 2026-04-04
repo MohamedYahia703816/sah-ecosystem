@@ -13,7 +13,15 @@
         },
         {
           "key": "WEBAPP_URL",
-          "value": "https://frontend-au1jxeci0-sonic-architect-hub.vercel.app"
+          "value": "https://sah-music.vercel.app"
+        },
+        {
+          "key": "SUPABASE_URL",
+          "value": "https://fosectnadqffvrnepdbo.supabase.co"
+        },
+        {
+          "key": "SUPABASE_KEY",
+          "value": "sb_publishable_j6JbOMEQjHUILKKpmExnuw_LSCGKWvv"
         }
       ],
       "plan": "free"

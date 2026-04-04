@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 
 interface CoinCounterProps {
   value: number
@@ -8,9 +9,11 @@ interface CoinCounterProps {
 
 export function CoinCounter({ value, size = 'md', showIcon = true }: CoinCounterProps) {
   const [displayValue, setDisplayValue] = useState(value)
+  const [isIncreasing, setIsIncreasing] = useState(false)
   
   useEffect(() => {
     const diff = value - displayValue
+    setIsIncreasing(diff > 0)
     if (Math.abs(diff) < 100) {
       setDisplayValue(value)
       return
@@ -49,10 +52,27 @@ export function CoinCounter({ value, size = 'md', showIcon = true }: CoinCounter
 
   return (
     <div className={`flex items-center gap-2 ${sizeClasses[size]}`}>
-      {showIcon && <span className="text-gold">🪙</span>}
-      <span className="font-mono font-bold text-gradient-gold tabular-nums">
+      {showIcon && (
+        <motion.span
+          className="text-gold"
+          animate={{
+            rotate: isIncreasing ? [0, 360] : 0,
+            scale: isIncreasing ? [1, 1.2, 1] : 1,
+          }}
+          transition={{ duration: 0.6, ease: 'easeInOut' }}
+        >
+          🪙
+        </motion.span>
+      )}
+      <motion.span
+        className="font-mono font-bold text-gradient-gold tabular-nums"
+        key={displayValue}
+        initial={{ y: isIncreasing ? 8 : -8, opacity: 0.5 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+      >
         {formatNumber(displayValue)}
-      </span>
+      </motion.span>
       <span className="text-sm text-text-secondary font-medium">SAH</span>
     </div>
   )

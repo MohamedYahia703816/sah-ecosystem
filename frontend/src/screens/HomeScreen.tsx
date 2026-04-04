@@ -5,10 +5,10 @@ import { CoinCounter } from '../components/CoinCounter'
 import { OrbitVisualizer } from '../components/OrbitVisualizer'
 import { GlassCard } from '../components/GlassCard'
 import { genres } from '../data/gameData'
-import { ArrowUpRight, Zap } from 'lucide-react'
+import { ArrowUpRight, Zap, Snowflake } from 'lucide-react'
 
 export function HomeScreen() {
-  const { balance, profitPerHour, boostMultiplier, selectedGenre, inventory, ownedGenres, isLoading, error } = useGame()
+  const { balance, profitPerHour, boostMultiplier, selectedGenre, inventory, ownedGenres, isLoading, error, userStatus, isFrozen, suspendedUntil } = useGame()
   const [showGenrePicker, setShowGenrePicker] = useState(!selectedGenre)
 
   if (isLoading) {
@@ -20,6 +20,36 @@ export function HomeScreen() {
         </div>
       </div>
     )
+  }
+
+  if (userStatus === 'banned') {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="glass-card p-6 text-center max-w-sm">
+          <div className="text-5xl mb-4">🚫</div>
+          <h2 className="text-lg font-semibold text-rose mb-2">Account Banned</h2>
+          <p className="text-text-secondary text-sm mb-3">Your account has been permanently banned.</p>
+          <p className="text-xs text-text-muted">Contact support if you believe this is a mistake.</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (userStatus === 'suspended' && suspendedUntil) {
+    const suspendEnd = new Date(suspendedUntil)
+    const isStillSuspended = suspendEnd > new Date()
+    if (isStillSuspended) {
+      return (
+        <div className="min-h-screen flex items-center justify-center p-6">
+          <div className="glass-card p-6 text-center max-w-sm">
+            <div className="text-5xl mb-4">⏸️</div>
+            <h2 className="text-lg font-semibold text-amber-500 mb-2">Account Suspended</h2>
+            <p className="text-text-secondary text-sm mb-3">Your account is temporarily suspended.</p>
+            <p className="text-xs text-text-muted">Access will be restored on {suspendEnd.toLocaleString()}</p>
+          </div>
+        </div>
+      )
+    }
   }
 
   if (error) {
@@ -83,6 +113,13 @@ export function HomeScreen() {
 
   return (
     <div className="min-h-screen pb-24 px-4 pt-6">
+      {isFrozen && (
+        <div className="glass-card p-3 mb-4 flex items-center gap-2 border-cyan/20">
+          <Snowflake size={16} className="text-cyan flex-shrink-0" />
+          <p className="text-xs text-cyan">Your balance is frozen. You cannot make purchases or earn profits.</p>
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-5">
         <CoinCounter value={balance} size="sm" />
         <div className="flex items-center gap-1.5 glass-card px-3 py-2">

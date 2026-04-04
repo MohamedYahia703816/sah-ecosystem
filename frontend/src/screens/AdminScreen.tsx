@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { GlassCard } from '../components/GlassCard'
-import { Lock, Plus, ToggleLeft, ToggleRight, Trash2, Users, Ticket, Settings, LogOut, Search, Edit2 } from 'lucide-react'
+import { Lock, Plus, ToggleLeft, ToggleRight, Trash2, Users, Ticket, Settings, LogOut, Search, Edit2, Bell, Send, Snowflake, Ban, Clock, CheckCircle, AlertTriangle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const supabase = createClient(
@@ -9,7 +9,7 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY
 )
 
-type TabType = 'stats' | 'users' | 'promos' | 'tasks'
+type TabType = 'stats' | 'users' | 'promos' | 'tasks' | 'notifications'
 
 interface User {
   id: string
@@ -18,6 +18,9 @@ interface User {
   balance: number
   profit_per_hour: number
   boost_multiplier: number
+  is_frozen: boolean
+  status: string
+  suspended_until: string | null
   last_claim: string | null
   created_at: string
 }
@@ -44,13 +47,21 @@ interface AdminTask {
   is_active: boolean
 }
 
+const suspendDurations = [
+  { label: '1h', hours: 1 },
+  { label: '6h', hours: 6 },
+  { label: '24h', hours: 24 },
+  { label: '7d', hours: 168 },
+  { label: '30d', hours: 720 },
+]
+
 export function AdminScreen() {
   const [authCode, setAuthCode] = useState('')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [authError, setAuthError] = useState('')
   const [activeTab, setActiveTab] = useState<TabType>('stats')
   const [loading, setLoading] = useState(false)
-  const [stats, setStats] = useState({ totalUsers: 0, totalBalance: 0, totalPromos: 0, activeTasks: 0 })
+  const [stats, setStats] = useState({ totalUsers: 0, totalBalance: 0, totalPromos: 0, activeTasks: 0, promoUses: 0, promoRemaining: 0 })
   const [users, setUsers] = useState<User[]>([])
   const [promos, setPromos] = useState<PromoCode[]>([])
   const [tasks, setTasks] = useState<AdminTask[]>([])
@@ -59,9 +70,13 @@ export function AdminScreen() {
   const [showAddPromo, setShowAddPromo] = useState(false)
   const [showAddTask, setShowAddTask] = useState(false)
   const [editingTask, setEditingTask] = useState<AdminTask | null>(null)
+  const [userAction, setUserAction] = useState<{ userId: string; action: string; duration?: number } | null>(null)
 
   const [newPromo, setNewPromo] = useState({ code: '', type: 'fixed_reward', reward_value: 1000, max_uses: 100 })
   const [newTask, setNewTask] = useState({ task_type: 'video', title: '', url: '', reward: 50, verify_seconds: 30, period: 'daily' })
+  const [notifications, setNotifications] = useState<{ id: string; title: string; message: string; sent: boolean; sent_at: string | null; created_at: string }[]>([])
+  const [newNotification, setNewNotification] = useState({ title: '', message: '' })
+  const [showAddNotification, setShowAddNotification] = useState(false)
 
   useEffect(() => {
     if (sessionStorage.getItem('admin_auth') === 'true') setIsAuthenticated(true)
@@ -73,6 +88,7 @@ export function AdminScreen() {
       loadUsers()
       loadPromos()
       loadTasks()
+      loadNotifications()
     }
   }, [isAuthenticated])
 
@@ -96,8 +112,11 @@ export function AdminScreen() {
       const { data: usersData } = await supabase.from('users').select('balance')
       const { count: promoCount } = await supabase.from('promo_codes').select('*', { count: 'exact', head: true })
       const { count: activeCount } = await supabase.from('admin_tasks').select('*', { count: 'exact', head: true }).eq('is_active', true)
+      const { data: promosData } = await supabase.from('promo_codes').select('used_count, max_uses')
       const totalBalance = usersData?.reduce((sum, u) => sum + (u.balance || 0), 0) || 0
-      setStats({ totalUsers: userCount || 0, totalBalance, totalPromos: promoCount || 0, activeTasks: activeCount || 0 })
+      const promoUses = promosData?.reduce((sum, p) => sum + (p.used_count || 0), 0) || 0
+      const promoRemaining = promosData?.reduce((sum, p) => sum + Math.max(0, (p.max_uses || 0) - (p.used_count || 0)), 0) || 0
+      setStats({ totalUsers: userCount || 0, totalBalance, totalPromos: promoCount || 0, activeTasks: activeCount || 0, promoUses, promoRemaining })
     } catch (err) { console.error('Failed to load stats:', err) }
   }
 
@@ -117,9 +136,48 @@ export function AdminScreen() {
 
   const loadTasks = async () => {
     try {
-      const { data } = await supabase.from('admin_tasks').select('*').order('sort_order', { ascending: true })
+      const { data, error } = await supabase.from('admin_tasks').select('*').order('sort_order', { ascending: true })
+      if (error) console.error('Task load error:', error)
       if (data) setTasks(data)
     } catch (err) { console.error('Failed to load tasks:', err) }
+  }
+
+  const loadNotifications = async () => {
+    try {
+      const { data } = await supabase.from('notifications').select('*').order('created_at', { ascending: false })
+      if (data) setNotifications(data)
+    } catch (err) { console.error('Failed to load notifications:', err) }
+  }
+
+  const handleSendNotification = async () => {
+    if (!newNotification.title || !newNotification.message) return
+    setLoading(true)
+    try {
+      const { error } = await supabase.from('notifications').insert({
+        title: newNotification.title,
+        message: newNotification.message,
+        sent: false,
+        sent_at: null,
+      })
+      if (error) {
+        console.error('Notification insert error:', error)
+        alert('Failed to send notification: ' + error.message)
+        return
+      }
+      setShowAddNotification(false)
+      setNewNotification({ title: '', message: '' })
+      loadNotifications()
+      alert('Notification queued! Bot will send it within 30 seconds.')
+    } catch (err) { console.error('Failed to send notification:', err) }
+    setLoading(false)
+  }
+
+  const handleDeleteNotification = async (id: string) => {
+    if (!confirm('Delete this notification?')) return
+    try {
+      await supabase.from('notifications').delete().eq('id', id)
+      loadNotifications()
+    } catch (err) { console.error('Failed to delete notification:', err) }
   }
 
   const handleBalanceUpdate = async () => {
@@ -167,7 +225,9 @@ export function AdminScreen() {
     if (!newTask.title || !newTask.url) return
     setLoading(true)
     try {
-      await supabase.from('admin_tasks').insert({ ...newTask, is_active: true, sort_order: tasks.length })
+      const { data, error } = await supabase.from('admin_tasks').insert({ ...newTask, is_active: true, sort_order: tasks.length }).select()
+      if (error) { console.error('Task insert error:', error); return }
+      console.log('Task added:', data)
       setShowAddTask(false)
       setNewTask({ task_type: 'video', title: '', url: '', reward: 50, verify_seconds: 30, period: 'daily' })
       loadTasks()
@@ -203,6 +263,33 @@ export function AdminScreen() {
     } catch (err) { console.error('Failed to delete task:', err) }
   }
 
+  const handleUserAction = async () => {
+    if (!userAction) return
+    setLoading(true)
+    try {
+      const updates: Record<string, any> = {}
+      if (userAction.action === 'freeze') {
+        const user = users.find(u => u.id === userAction.userId)
+        updates.is_frozen = !user?.is_frozen
+      } else if (userAction.action === 'suspend') {
+        const until = new Date(Date.now() + (userAction.duration || 24) * 60 * 60 * 1000)
+        updates.status = 'suspended'
+        updates.suspended_until = until.toISOString()
+      } else if (userAction.action === 'ban') {
+        updates.status = 'banned'
+        updates.suspended_until = null
+      } else if (userAction.action === 'unban') {
+        updates.status = 'active'
+        updates.is_frozen = false
+        updates.suspended_until = null
+      }
+      await supabase.from('users').update(updates).eq('id', userAction.userId)
+      setUserAction(null)
+      loadUsers()
+    } catch (err) { console.error('Failed to update user:', err) }
+    setLoading(false)
+  }
+
   const handleLogout = () => { setIsAuthenticated(false); sessionStorage.removeItem('admin_auth') }
 
   const filteredUsers = users.filter(u =>
@@ -229,14 +316,13 @@ export function AdminScreen() {
             onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
           />
           {authError && <p className="text-rose text-xs mb-3 text-center">{authError}</p>}
-          <motion.button
-            className="w-full py-2.5 bg-gradient-to-r from-gold to-gold-dark text-bg-primary font-semibold text-sm rounded-lg"
-            whileTap={{ scale: 0.95 }}
+          <button
+            className="btn-gold btn-full"
             onClick={handleAuth}
             disabled={loading || !authCode.trim()}
           >
             {loading ? 'Checking...' : 'Login'}
-          </motion.button>
+          </button>
         </GlassCard>
       </div>
     )
@@ -247,6 +333,7 @@ export function AdminScreen() {
     { id: 'users', label: 'Users', icon: Users },
     { id: 'promos', label: 'Promos', icon: Ticket },
     { id: 'tasks', label: 'Tasks', icon: Settings },
+    { id: 'notifications', label: 'Notify', icon: Bell },
   ]
 
   return (
@@ -262,7 +349,7 @@ export function AdminScreen() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1 ${
-              activeTab === tab.id ? 'bg-gradient-to-r from-gold to-gold-dark text-bg-primary' : 'glass-card text-text-secondary'
+              activeTab === tab.id ? 'btn-gold' : 'glass-card text-text-secondary'
             }`}
           >
             <tab.icon size={14} />
@@ -290,6 +377,14 @@ export function AdminScreen() {
               <p className="text-xl font-semibold text-cyan">{stats.activeTasks}</p>
               <p className="text-xs text-text-secondary">Active Tasks</p>
             </GlassCard>
+            <GlassCard className="text-center p-3">
+              <p className="text-xl font-semibold text-gold">{stats.promoUses}</p>
+              <p className="text-xs text-text-secondary">Promo Uses</p>
+            </GlassCard>
+            <GlassCard className="text-center p-3">
+              <p className="text-xl font-semibold text-text-secondary">{stats.promoRemaining}</p>
+              <p className="text-xs text-text-secondary">Remaining Uses</p>
+            </GlassCard>
           </div>
         </div>
       )}
@@ -303,7 +398,7 @@ export function AdminScreen() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search users..."
-              className="w-full bg-bg-secondary border border-border-glass rounded-lg pl-9 pr-3 py-2.5 text-sm text-text-primary placeholder-text-secondary focus:outline-none focus:border-gold"
+              className="w-full bg-bg-secondary border border-border-glass rounded-lg pl-9 pr-3 py-2.5 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-gold"
             />
           </div>
           {filteredUsers.map(user => (
@@ -313,7 +408,12 @@ export function AdminScreen() {
                   {(user.first_name || user.username || '?')[0].toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-text-primary text-sm truncate">{user.first_name || user.username || user.id.slice(0, 8)}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-text-primary text-sm truncate">{user.first_name || user.username || user.id.slice(0, 8)}</p>
+                    {user.status === 'banned' && <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose/20 text-rose">Banned</span>}
+                    {user.status === 'suspended' && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500">Suspended</span>}
+                    {user.is_frozen && <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan/20 text-cyan">Frozen</span>}
+                  </div>
                   <p className="text-xs text-text-secondary truncate">{user.id}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
@@ -329,11 +429,44 @@ export function AdminScreen() {
                     onChange={(e) => setBalanceEdit({ ...balanceEdit, amount: parseInt(e.target.value) || 0 })}
                     className="flex-1 bg-bg-secondary border border-border-glass rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-gold"
                   />
-                  <button onClick={handleBalanceUpdate} className="px-3 py-2 bg-emerald text-bg-primary text-xs font-semibold rounded-lg">{loading ? '...' : 'Save'}</button>
+                  <button onClick={handleBalanceUpdate} className="btn-emerald btn-xs">{loading ? '...' : 'Save'}</button>
                   <button onClick={() => setBalanceEdit(null)} className="px-3 py-2 bg-bg-tertiary text-text-secondary text-xs rounded-lg">Cancel</button>
                 </div>
+              ) : userAction?.userId === user.id ? (
+                <div className="mt-3">
+                  {userAction.action === 'suspend' ? (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {suspendDurations.map(d => (
+                        <button
+                          key={d.label}
+                          onClick={() => setUserAction({ userId: user.id, action: 'suspend', duration: d.hours })}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
+                            userAction.duration === d.hours ? 'bg-amber-500 text-bg-primary' : 'bg-bg-tertiary text-text-secondary'
+                          }`}
+                        >
+                          {d.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                  <div className="flex gap-2">
+                    <button onClick={handleUserAction} className="btn-emerald btn-xs flex-1">{loading ? '...' : 'Confirm'}</button>
+                    <button onClick={() => setUserAction(null)} className="px-4 py-2 bg-bg-tertiary text-text-secondary text-xs rounded-lg">Cancel</button>
+                  </div>
+                </div>
               ) : (
-                <button onClick={() => setBalanceEdit({ userId: user.id, amount: user.balance || 0 })} className="mt-2 text-xs text-cyan flex items-center gap-1"><Edit2 size={12} /> Edit Balance</button>
+                <div className="flex gap-1.5 mt-3 flex-wrap">
+                  <button onClick={() => setBalanceEdit({ userId: user.id, amount: user.balance || 0 })} className="px-2.5 py-1.5 bg-bg-tertiary text-text-secondary text-[11px] rounded-lg flex items-center gap-1"><Edit2 size={12} /> Balance</button>
+                  <button onClick={() => setUserAction({ userId: user.id, action: 'freeze' })} className={`px-2.5 py-1.5 text-[11px] rounded-lg flex items-center gap-1 ${user.is_frozen ? 'bg-cyan/20 text-cyan' : 'bg-bg-tertiary text-text-secondary'}`}><Snowflake size={12} /> {user.is_frozen ? 'Unfreeze' : 'Freeze'}</button>
+                  {user.status === 'banned' ? (
+                    <button onClick={() => setUserAction({ userId: user.id, action: 'unban' })} className="px-2.5 py-1.5 bg-emerald/20 text-emerald text-[11px] rounded-lg flex items-center gap-1"><CheckCircle size={12} /> Unban</button>
+                  ) : (
+                    <>
+                      <button onClick={() => setUserAction({ userId: user.id, action: 'suspend' })} className="px-2.5 py-1.5 bg-amber-500/20 text-amber-500 text-[11px] rounded-lg flex items-center gap-1"><Clock size={12} /> Suspend</button>
+                      <button onClick={() => setUserAction({ userId: user.id, action: 'ban' })} className="px-2.5 py-1.5 bg-rose/20 text-rose text-[11px] rounded-lg flex items-center gap-1"><Ban size={12} /> Ban</button>
+                    </>
+                  )}
+                </div>
               )}
             </GlassCard>
           ))}
@@ -342,13 +475,12 @@ export function AdminScreen() {
 
       {activeTab === 'promos' && (
         <div className="space-y-3">
-          <motion.button
-            className="w-full py-2.5 bg-gradient-to-r from-violet to-violet-light text-white font-semibold text-sm rounded-lg flex items-center justify-center gap-2"
-            whileTap={{ scale: 0.95 }}
+          <button
+            className="btn-gold btn-full"
             onClick={() => setShowAddPromo(true)}
           >
             <Plus size={16} /> Add Promo Code
-          </motion.button>
+          </button>
 
           <AnimatePresence>
             {showAddPromo && (
@@ -366,7 +498,7 @@ export function AdminScreen() {
                       </select>
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={handleAddPromo} className="flex-1 py-2 bg-emerald text-bg-primary text-xs font-semibold rounded-lg">{loading ? '...' : 'Create'}</button>
+                      <button onClick={handleAddPromo} className="btn-emerald btn-xs flex-1">{loading ? '...' : 'Create'}</button>
                       <button onClick={() => setShowAddPromo(false)} className="px-4 py-2 bg-bg-tertiary text-text-secondary text-xs rounded-lg">Cancel</button>
                     </div>
                   </div>
@@ -399,13 +531,12 @@ export function AdminScreen() {
 
       {activeTab === 'tasks' && (
         <div className="space-y-3">
-          <motion.button
-            className="w-full py-2.5 bg-gradient-to-r from-cyan to-cyan-light text-bg-primary font-semibold text-sm rounded-lg flex items-center justify-center gap-2"
-            whileTap={{ scale: 0.95 }}
+          <button
+            className="btn-violet btn-full flex items-center justify-center gap-2"
             onClick={() => setShowAddTask(true)}
           >
             <Plus size={16} /> Add Task
-          </motion.button>
+          </button>
 
           <AnimatePresence>
             {showAddTask && (
@@ -430,7 +561,7 @@ export function AdminScreen() {
                       </select>
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={handleAddTask} className="flex-1 py-2 bg-emerald text-bg-primary text-xs font-semibold rounded-lg">{loading ? '...' : 'Add'}</button>
+                      <button onClick={handleAddTask} className="btn-emerald btn-xs flex-1">{loading ? '...' : 'Add'}</button>
                       <button onClick={() => setShowAddTask(false)} className="px-4 py-2 bg-bg-tertiary text-text-secondary text-xs rounded-lg">Cancel</button>
                     </div>
                   </div>
@@ -455,7 +586,7 @@ export function AdminScreen() {
                     </select>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => handleUpdateTask(editingTask)} className="flex-1 py-2 bg-emerald text-bg-primary text-xs font-semibold rounded-lg">Save</button>
+                    <button onClick={() => handleUpdateTask(editingTask)} className="btn-emerald btn-xs flex-1">Save</button>
                     <button onClick={() => setEditingTask(null)} className="px-4 py-2 bg-bg-tertiary text-text-secondary text-xs rounded-lg">Cancel</button>
                   </div>
                 </div>
@@ -484,6 +615,64 @@ export function AdminScreen() {
               )}
             </GlassCard>
           ))}
+
+          {tasks.length === 0 && (
+            <GlassCard className="text-center py-8">
+              <AlertTriangle size={40} className="mx-auto text-text-secondary mb-3" />
+              <p className="text-text-secondary text-sm">No tasks yet. Add your first task!</p>
+            </GlassCard>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'notifications' && (
+        <div className="space-y-3">
+          <button
+            className="btn-rose btn-full flex items-center justify-center gap-2"
+            onClick={() => setShowAddNotification(true)}
+          >
+            <Send size={16} /> Send Notification
+          </button>
+
+          <AnimatePresence>
+            {showAddNotification && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                <GlassCard className="p-3">
+                  <div className="space-y-2">
+                    <input type="text" value={newNotification.title} onChange={(e) => setNewNotification(n => ({ ...n, title: e.target.value }))} placeholder="Title" className="w-full bg-bg-secondary border border-border-glass rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-gold" />
+                    <textarea value={newNotification.message} onChange={(e) => setNewNotification(n => ({ ...n, message: e.target.value }))} placeholder="Message..." rows={3} className="w-full bg-bg-secondary border border-border-glass rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-gold resize-none" />
+                    <div className="flex gap-2">
+                      <button onClick={handleSendNotification} className="btn-emerald btn-xs flex-1">{loading ? '...' : 'Send to All Users'}</button>
+                      <button onClick={() => setShowAddNotification(false)} className="btn-secondary btn-xs">Cancel</button>
+                    </div>
+                  </div>
+                </GlassCard>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {notifications.map(notif => (
+            <GlassCard key={notif.id} className="p-3">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-bg-tertiary flex items-center justify-center flex-shrink-0">
+                  <Bell size={16} className={notif.sent ? 'text-emerald' : 'text-text-secondary'} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-text-primary text-sm truncate">{notif.title}</p>
+                  <p className="text-xs text-text-secondary truncate">{notif.message}</p>
+                  <p className="text-[10px] text-text-secondary mt-1">{notif.sent ? `Sent: ${new Date(notif.sent_at || '').toLocaleString()}` : 'Pending'}</p>
+                </div>
+                <button onClick={() => handleDeleteNotification(notif.id)} className="p-1.5 text-text-secondary hover:text-rose flex-shrink-0"><Trash2 size={14} /></button>
+              </div>
+            </GlassCard>
+          ))}
+
+          {notifications.length === 0 && (
+            <GlassCard className="text-center py-8">
+              <Bell size={40} className="mx-auto text-text-secondary mb-3" />
+              <p className="text-text-secondary text-sm">No notifications sent yet</p>
+            </GlassCard>
+          )}
         </div>
       )}
     </div>

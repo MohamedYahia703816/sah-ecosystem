@@ -2,8 +2,20 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useGame } from '../context/GameContext'
 import { GlassCard } from '../components/GlassCard'
-import { tasks } from '../data/gameData'
-import { ExternalLink, Check, Clock, Gift, Play, AlertCircle } from 'lucide-react'
+import { tasks as defaultTasks } from '../data/gameData'
+import { supabase } from '../lib/supabase'
+import { Gift, Check, AlertCircle } from 'lucide-react'
+
+interface AdminTask {
+  id: string
+  task_type: string
+  title: string
+  url: string
+  reward: number
+  verify_seconds: number
+  period: string
+  is_active: boolean
+}
 
 type WatchState = 'idle' | 'opened' | 'watching' | 'completed'
 
@@ -22,11 +34,36 @@ export function TasksScreen() {
   const [promoSuccess, setPromoSuccess] = useState<boolean | null>(null)
   const [processing, setProcessing] = useState<string | null>(null)
   const [watchSession, setWatchSession] = useState<WatchSession | null>(null)
+  const [adminTasks, setAdminTasks] = useState<AdminTask[]>([])
   const watchTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    loadAdminTasks()
+  }, [])
+
+  const loadAdminTasks = async () => {
+    try {
+      const { data } = await supabase.from('admin_tasks').select('*').eq('is_active', true).order('sort_order', { ascending: true })
+      if (data) setAdminTasks(data)
+    } catch (err) { console.error('Failed to load admin tasks:', err) }
+  }
+
+  const allTasks = [
+    ...defaultTasks,
+    ...adminTasks.map(t => ({
+      id: t.id,
+      name: t.title,
+      icon: t.task_type === 'video' ? '📹' : t.task_type === 'like' ? '👍' : t.task_type === 'comment' ? '💬' : '📤',
+      description: `${t.verify_seconds}s verification`,
+      reward: t.reward,
+      type: t.period === 'AM' ? 'video_am' : t.period === 'PM' ? 'video_pm' : t.task_type as any,
+      url: t.url,
+    })),
+  ]
 
   const isTaskCompleted = (taskId: string) => completedTasks.includes(taskId)
 
-  const handleTask = async (task: typeof tasks[0]) => {
+  const handleTask = async (task: typeof allTasks[0]) => {
     if (isTaskCompleted(task.id) || processing) return
 
     if (task.type === 'video_am' || task.type === 'video_pm') {
@@ -120,17 +157,6 @@ export function TasksScreen() {
     }
   }
 
-  const getTaskIcon = (type: string) => {
-    switch (type) {
-      case 'daily_bonus': return <Gift size={20} className="text-gold" />
-      case 'channel':
-      case 'group': return <ExternalLink size={20} className="text-cyan" />
-      case 'video_am':
-      case 'video_pm': return <Play size={20} className="text-emerald" />
-      default: return <Clock size={20} className="text-text-secondary" />
-    }
-  }
-
   return (
     <div className="min-h-screen pb-24 px-4 pt-6">
       <div className="text-center mb-6">
@@ -158,7 +184,7 @@ export function TasksScreen() {
             onKeyDown={(e) => e.key === 'Enter' && handlePromoRedeem()}
           />
           <motion.button
-            className="px-4 py-2.5 bg-gradient-to-r from-gold to-gold-dark text-bg-primary font-semibold text-sm rounded-lg"
+            className="btn-gold"
             whileTap={{ scale: 0.95 }}
             onClick={handlePromoRedeem}
             disabled={processing === 'promo' || !promoCode.trim()}
@@ -178,7 +204,7 @@ export function TasksScreen() {
       </GlassCard>
 
       <div className="space-y-3">
-        {tasks.map((task, index) => {
+        {allTasks.map((task, index) => {
           const completed = isTaskCompleted(task.id)
 
           return (
@@ -195,7 +221,7 @@ export function TasksScreen() {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 rounded-lg bg-bg-tertiary flex items-center justify-center flex-shrink-0">
-                    {completed ? <Check size={18} className="text-emerald" /> : getTaskIcon(task.type)}
+                    {completed ? <Check size={18} className="text-emerald" /> : <span className="text-lg">{task.icon}</span>}
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -237,7 +263,7 @@ export function TasksScreen() {
                     The video opened in your browser. Watch it, then come back and confirm.
                   </p>
                   <motion.button
-                    className="w-full py-3 bg-gradient-to-r from-emerald to-emerald-light text-bg-primary font-semibold text-sm rounded-lg"
+                    className="btn-emerald btn-full"
                     whileTap={{ scale: 0.95 }}
                     onClick={startWatching}
                   >

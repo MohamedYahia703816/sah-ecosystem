@@ -131,11 +131,7 @@ export function StoreScreen() {
                       </div>
                     ) : (
                       <motion.button
-                        className={`px-3 py-2 rounded-lg font-medium text-xs transition-all ${
-                          canAfford
-                            ? 'bg-gradient-to-r from-gold to-gold-dark text-bg-primary'
-                            : 'bg-bg-tertiary text-text-secondary'
-                        }`}
+                        className={`btn-gold btn-xs ${!canAfford ? 'btn-secondary' : ''}`}
                         disabled={!canAfford || isPurchasing}
                         whileTap={canAfford ? { scale: 0.95 } : {}}
                         onClick={() => handlePurchase(currentGenre.id, level.level)}

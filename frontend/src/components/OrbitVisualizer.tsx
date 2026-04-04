@@ -1,18 +1,59 @@
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface OrbitVisualizerProps {
   instrument: string
   level: number
   genreColor: string
   isActive: boolean
+  onTap?: () => void
 }
 
-export function OrbitVisualizer({ instrument, level, genreColor, isActive }: OrbitVisualizerProps) {
+export function OrbitVisualizer({ instrument, level, genreColor, isActive, onTap }: OrbitVisualizerProps) {
   const orbitCount = Math.min(level, 5)
-  
+  const [tapEffects, setTapEffects] = useState<{ id: number; x: number; y: number }[]>([])
+
+  const handleTap = (e: React.MouseEvent | React.TouchEvent) => {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY
+    const x = clientX - rect.left
+    const y = clientY - rect.top
+
+    const id = Date.now()
+    setTapEffects(prev => [...prev, { id, x, y }])
+    setTimeout(() => setTapEffects(prev => prev.filter(t => t.id !== id)), 800)
+
+    if (onTap) onTap()
+  }
+
   return (
-    <div className="relative w-64 h-64 mx-auto flex items-center justify-center">
-      {/* Orbit rings */}
+    <div
+      className="relative w-64 h-64 mx-auto flex items-center justify-center cursor-pointer select-none"
+      onClick={handleTap}
+      onTouchStart={handleTap}
+    >
+      <AnimatePresence>
+        {tapEffects.map(effect => (
+          <motion.div
+            key={effect.id}
+            initial={{ scale: 0, opacity: 1 }}
+            animate={{ scale: 2.5, opacity: 0 }}
+            exit={{ opacity: 0 }}
+            className="absolute pointer-events-none rounded-full"
+            style={{
+              left: effect.x - 20,
+              top: effect.y - 20,
+              width: 40,
+              height: 40,
+              border: `2px solid ${genreColor}`,
+              boxShadow: `0 0 15px ${genreColor}60`,
+            }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+          />
+        ))}
+      </AnimatePresence>
+
       {Array.from({ length: orbitCount }).map((_, i) => (
         <motion.div
           key={i}
@@ -33,8 +74,7 @@ export function OrbitVisualizer({ instrument, level, genreColor, isActive }: Orb
           }}
         />
       ))}
-      
-      {/* Particles on orbits */}
+
       {Array.from({ length: orbitCount * 3 }).map((_, i) => {
         const orbitIndex = Math.floor(i / 3)
         const particleIndex = i % 3
@@ -42,7 +82,7 @@ export function OrbitVisualizer({ instrument, level, genreColor, isActive }: Orb
         const angle = (particleIndex * 120 + orbitIndex * 30) * (Math.PI / 180)
         const x = Math.cos(angle) * radius
         const y = Math.sin(angle) * radius
-        
+
         return (
           <motion.div
             key={`particle-${i}`}
@@ -67,8 +107,7 @@ export function OrbitVisualizer({ instrument, level, genreColor, isActive }: Orb
           />
         )
       })}
-      
-      {/* Center instrument */}
+
       <motion.div
         className="relative z-10 text-7xl"
         animate={{
@@ -83,8 +122,7 @@ export function OrbitVisualizer({ instrument, level, genreColor, isActive }: Orb
       >
         {instrument}
       </motion.div>
-      
-      {/* Center glow */}
+
       <motion.div
         className="absolute w-32 h-32 rounded-full"
         style={{

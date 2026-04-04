@@ -22,7 +22,7 @@ export function WalletScreen() {
         <p className="text-text-secondary text-sm mb-4 px-4">Connect your TON wallet to receive future airdrops based on your in-game balance</p>
         
         <motion.button
-          className="px-6 py-3 bg-gradient-to-r from-violet to-violet-light text-white font-semibold text-sm rounded-lg flex items-center gap-2 mx-auto"
+          className="btn-violet flex items-center gap-2 mx-auto"
           whileTap={{ scale: 0.95 }}
           whileHover={{ scale: 1.02 }}
           onClick={() => {

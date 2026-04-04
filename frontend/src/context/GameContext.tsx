@@ -27,6 +27,9 @@ interface GameState {
   lastDailyBonus: Date | null
   isLoading: boolean
   error: string | null
+  userStatus: string
+  isFrozen: boolean
+  suspendedUntil: string | null
 }
 
 interface GameContextType extends GameState {
@@ -55,6 +58,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     lastDailyBonus: null,
     isLoading: true,
     error: null,
+    userStatus: 'active',
+    isFrozen: false,
+    suspendedUntil: null,
   })
 
   const balanceAccumulatorRef = useRef(0)
@@ -144,10 +150,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         })
         .map(t => t.task_type)
 
+      const effectiveProfit = user.is_frozen ? 0 : (user.profit_per_hour || 0)
+      const effectiveBalance = user.is_frozen ? (user.balance || 0) : totalBalance
+
       setState(prev => ({
         ...prev,
-        balance: totalBalance,
-        profitPerHour: user.profit_per_hour || 0,
+        balance: effectiveBalance,
+        profitPerHour: effectiveProfit,
         boostMultiplier: user.boost_multiplier || 1.0,
         selectedGenre: user.selected_genre || null,
         ownedGenres: user.owned_genres || [],
@@ -156,10 +165,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         completedTasks: completedTaskIds,
         lastClaim: user.last_claim ? new Date(user.last_claim) : null,
         lastDailyBonus: user.last_daily_bonus ? new Date(user.last_daily_bonus) : null,
+        userStatus: user.status || 'active',
+        isFrozen: user.is_frozen || false,
+        suspendedUntil: user.suspended_until || null,
         isLoading: false,
       }))
 
-      if (passiveEarnings > 0) {
+      if (passiveEarnings > 0 && !user.is_frozen) {
         await updateUser(userId, { balance: totalBalance, last_claim: new Date().toISOString() })
       }
     } catch (err: any) {
@@ -170,6 +182,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const purchaseInstrument = useCallback(async (genre: string, level: number): Promise<boolean> => {
     if (!state.userId) return false
+    if (state.userStatus === 'banned') return false
+    if (state.userStatus === 'suspended') return false
+    if (state.isFrozen) return false
 
     const genreData = genres.find(g => g.id === genre)
     if (!genreData) return false
@@ -220,6 +235,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const purchaseBooster = useCallback(async (boosterType: string): Promise<boolean> => {
     if (!state.userId) return false
+    if (state.userStatus === 'banned') return false
+    if (state.userStatus === 'suspended') return false
+    if (state.isFrozen) return false
 
     const boosterData = boostersData.find(b => b.id === boosterType)
     if (!boosterData) return false
@@ -266,6 +284,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const completeTask = useCallback(async (taskType: string, reward: number): Promise<boolean> => {
     if (!state.userId) return false
+    if (state.userStatus === 'banned') return false
+    if (state.userStatus === 'suspended') return false
+    if (state.isFrozen) return false
 
     if (state.completedTasks.includes(taskType)) return false
 
@@ -390,6 +411,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (state.profitPerHour <= 0) return
+    if (state.userStatus === 'banned') return
+    if (state.userStatus === 'suspended') return
+    if (state.isFrozen) return
 
     const earningsPerSecond = (state.profitPerHour * state.boostMultiplier) / 3600
 
