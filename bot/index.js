@@ -42,10 +42,14 @@ bot.start(async (ctx) => {
   }
 
   ctx.reply(
-    '🎹 Welcome to SAH Music Studio!\n\nBuild your music empire, earn SAH coins, and climb the leaderboard!\n\nTap the button below to open your studio:',
+    '🎹 *Welcome to SAH Music Studio!*\n\nBuild your music empire, earn SAH coins, and climb the leaderboard!\n\n🎮 *New:* Kingdom Game is here! Collect instruments, trade, and build your musical empire.',
     {
+      parse_mode: 'Markdown',
       reply_markup: {
         inline_keyboard: [
+          [
+            { text: '🎮 Kingdom Game', web_app: { url: `${WEBAPP_URL}/kingdom` } },
+          ],
           [
             { text: '🎵 Open Studio', web_app: { url: WEBAPP_URL } },
           ],
@@ -57,10 +61,14 @@ bot.start(async (ctx) => {
 
 bot.on('message', (ctx) => {
   ctx.reply(
-    '🎹 Tap the button below to open your studio:',
+    '🎹 *Welcome to SAH Music Studio!*\n\n🎮 Kingdom Game is here! Collect instruments, trade, and build your musical empire.\n\nTap a button below:',
     {
+      parse_mode: 'Markdown',
       reply_markup: {
         inline_keyboard: [
+          [
+            { text: '🎮 Kingdom Game', web_app: { url: `${WEBAPP_URL}/kingdom` } },
+          ],
           [
             { text: '🎵 Open Studio', web_app: { url: WEBAPP_URL } },
           ],
