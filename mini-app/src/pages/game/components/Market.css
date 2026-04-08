@@ -1,0 +1,368 @@
+/* ============================================
+   MARKET — TRADING UI
+   ============================================ */
+
+.market-container {
+  background: linear-gradient(135deg, rgba(18, 18, 26, 0.95) 0%, rgba(26, 26, 38, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 24px;
+  position: relative;
+}
+
+/* --- Header --- */
+.market-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.market-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 24px;
+  color: #fff;
+  margin: 0;
+}
+
+.market-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tab {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 8px 24px;
+  color: #8a8a9a;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab:hover {
+  border-color: rgba(212, 175, 55, 0.3);
+  color: #fff;
+}
+
+.tab.active {
+  background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+  border-color: #d4af37;
+  color: #0a0a0f;
+}
+
+/* --- Notification --- */
+.notification {
+  position: absolute;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 100;
+  animation: slideInBottom 0.3s ease-out;
+}
+
+.notification.success {
+  background: linear-gradient(135deg, rgba(46, 204, 113, 0.9) 0%, rgba(39, 174, 96, 0.9) 100%);
+  color: #fff;
+}
+
+.notification.error {
+  background: linear-gradient(135deg, rgba(231, 76, 60, 0.9) 0%, rgba(192, 57, 43, 0.9) 100%);
+  color: #fff;
+  animation: shake 0.5s ease-out;
+}
+
+/* --- Content --- */
+.market-content {
+  min-height: 300px;
+}
+
+/* --- Listings Grid --- */
+.listings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.listing-card {
+  background: rgba(26, 26, 38, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  animation: cardSpawn 0.4s ease-out forwards;
+  opacity: 0;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.listing-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.listing-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.seller {
+  font-size: 11px;
+  color: #8a8a9a;
+}
+
+.listing-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.price-amount {
+  font-size: 18px;
+  font-weight: 700;
+  color: #d4af37;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.price-label {
+  font-size: 10px;
+  color: #888;
+}
+
+.buy-btn {
+  width: 100%;
+  padding: 10px;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.buy-btn:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 4px 16px rgba(46, 204, 113, 0.4);
+}
+
+.buy-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.buy-btn:disabled {
+  background: #4a4a5a;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* --- Sell Section --- */
+.sell-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sell-section h3 {
+  font-size: 16px;
+  color: #8a8a9a;
+  margin: 0 0 16px 0;
+}
+
+.sell-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+  background: rgba(26, 26, 38, 0.5);
+  border-radius: 16px;
+}
+
+.selected-item {
+  animation: cardSpawn 0.3s ease-out;
+}
+
+.price-input {
+  width: 100%;
+  max-width: 300px;
+}
+
+.price-input label {
+  display: block;
+  font-size: 12px;
+  color: #8a8a9a;
+  margin-bottom: 8px;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+}
+
+.input-wrapper:focus-within {
+  border-color: #d4af37;
+}
+
+.input-icon {
+  padding: 0 12px;
+  font-size: 18px;
+}
+
+.input-wrapper input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 14px 0;
+  color: #fff;
+  font-size: 18px;
+  font-family: 'JetBrains Mono', monospace;
+  outline: none;
+}
+
+.input-wrapper input::placeholder {
+  color: #4a4a5a;
+}
+
+.input-suffix {
+  padding: 0 16px;
+  color: #8a8a9a;
+  font-size: 12px;
+}
+
+.sell-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.cancel-btn {
+  padding: 12px 24px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #8a8a9a;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-btn:hover {
+  border-color: rgba(231, 76, 60, 0.5);
+  color: #e74c3c;
+}
+
+.confirm-sell-btn {
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+  border: none;
+  border-radius: 8px;
+  color: #0a0a0f;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.confirm-sell-btn:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.4);
+}
+
+.confirm-sell-btn:disabled {
+  background: #4a4a5a;
+  color: #8a8a9a;
+  cursor: not-allowed;
+}
+
+/* --- Inventory Grid --- */
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.inventory-item {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.inventory-item:hover {
+  transform: scale(1.05);
+}
+
+/* --- Empty State --- */
+.empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 64px;
+  opacity: 0.5;
+  margin-bottom: 16px;
+}
+
+.empty-state p {
+  font-size: 16px;
+  color: #8a8a9a;
+  margin: 0 0 8px 0;
+}
+
+.empty-hint {
+  font-size: 12px;
+  color: #4a4a5a;
+}
+
+/* --- Market Stats --- */
+.market-stats {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.market-stats .stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.market-stats .stat-label {
+  font-size: 11px;
+  color: #8a8a9a;
+  text-transform: uppercase;
+}
+
+.market-stats .stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+}

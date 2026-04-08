@@ -1,0 +1,268 @@
+/* ============================================
+   KINGDOM PAGE — MAIN GAME UI
+   ============================================ */
+
+.kingdom-page {
+  min-height: 100vh;
+  background: #0a0a0f;
+}
+
+/* --- Hero Section --- */
+.kingdom-hero {
+  position: relative;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0a0a0f 0%, #12121a 50%, #0a0a0f 100%);
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 50%, rgba(74, 158, 255, 0.1) 0%, transparent 50%);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.kingdom-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  text-shadow: 
+    0 0 20px rgba(212, 175, 55, 0.5),
+    0 0 40px rgba(212, 175, 55, 0.3);
+  animation: glowPulse 3s infinite;
+}
+
+.kingdom-subtitle {
+  font-size: 18px;
+  color: #8a8a9a;
+  margin: 8px 0 0 0;
+}
+
+.hero-decoration {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 32px;
+  opacity: 0.3;
+}
+
+.deco-icon {
+  font-size: 24px;
+  animation: float 3s ease-in-out infinite;
+}
+
+.deco-icon:nth-child(2) { animation-delay: 0.5s; }
+.deco-icon:nth-child(3) { animation-delay: 1s; }
+.deco-icon:nth-child(4) { animation-delay: 1.5s; }
+
+/* --- Main Content --- */
+.kingdom-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+/* --- Tab Navigation --- */
+.tab-nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: rgba(18, 18, 26, 0.5);
+  padding: 8px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.nav-tab {
+  flex: 1;
+  padding: 14px 24px;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  color: #8a8a9a;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-tab:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-tab.active {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.1) 100%);
+  color: #d4af37;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+}
+
+/* --- Tab Content --- */
+.tab-content {
+  min-height: 400px;
+}
+
+/* --- Collection Section --- */
+.collection-section {
+  animation: slideInBottom 0.3s ease-out;
+}
+
+.collection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
+}
+
+.collection-item {
+  animation: cardSpawn 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+/* --- Empty Collection --- */
+.empty-collection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(18, 18, 26, 0.8) 0%, rgba(26, 26, 38, 0.8) 100%);
+  border: 2px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+}
+
+.empty-icon {
+  font-size: 80px;
+  margin-bottom: 24px;
+  opacity: 0.5;
+  animation: float 3s ease-in-out infinite;
+}
+
+.empty-collection h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 24px;
+  color: #fff;
+  margin: 0 0 8px 0;
+}
+
+.empty-collection p {
+  color: #8a8a9a;
+  margin: 0 0 24px 0;
+}
+
+.starter-btn {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+  border: none;
+  border-radius: 12px;
+  color: #0a0a0f;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.starter-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 32px rgba(212, 175, 55, 0.4);
+}
+
+.starter-btn:active {
+  transform: scale(0.98);
+}
+
+/* --- Chest Section --- */
+.chest-section {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+  animation: slideInBottom 0.3s ease-out;
+}
+
+/* --- Market Section --- */
+.market-section {
+  animation: slideInBottom 0.3s ease-out;
+}
+
+/* --- Guild Section --- */
+.guild-section {
+  animation: slideInBottom 0.3s ease-out;
+}
+
+/* --- Trade Section --- */
+.trade-section {
+  animation: slideInBottom 0.3s ease-out;
+}
+
+/* --- NFT Count --- */
+.nft-count {
+  color: #9b59b6 !important;
+  font-weight: 600;
+  margin-top: 8px !important;
+}
+
+/* --- Telegram Badge --- */
+.telegram-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: linear-gradient(135deg, #0088cc 0%, #0077b5 100%);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 10;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .kingdom-hero {
+    height: 160px;
+  }
+
+  .kingdom-title {
+    font-size: 32px;
+  }
+
+  .kingdom-subtitle {
+    font-size: 14px;
+  }
+
+  .tab-nav {
+    flex-direction: column;
+  }
+
+  .collection-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .kingdom-content {
+    padding: 16px;
+  }
+
+  .kingdom-title {
+    font-size: 28px;
+  }
+
+  .collection-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

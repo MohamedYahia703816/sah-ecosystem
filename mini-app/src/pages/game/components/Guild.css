@@ -1,0 +1,332 @@
+/* ============================================
+   GUILD SYSTEM — MULTIPLAYER UI
+   ============================================ */
+
+.guild-container {
+  background: linear-gradient(135deg, rgba(18, 18, 26, 0.95) 0%, rgba(26, 26, 38, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 24px;
+}
+
+/* --- Header --- */
+.guild-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.guild-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 24px;
+  color: #fff;
+  margin: 0;
+}
+
+.create-guild-btn {
+  background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 10px 20px;
+  color: #0a0a0f;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.create-guild-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.4);
+}
+
+/* --- Modal --- */
+.guild-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.guild-modal {
+  background: #12121a;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 20px;
+  padding: 32px;
+  width: 90%;
+  max-width: 400px;
+  animation: slideInBottom 0.3s ease-out;
+}
+
+.guild-modal h3 {
+  font-family: 'Orbitron', sans-serif;
+  color: #d4af37;
+  margin: 0 0 20px 0;
+  text-align: center;
+}
+
+.guild-modal input {
+  width: 100%;
+  padding: 14px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #fff;
+  font-size: 16px;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.guild-modal input:focus {
+  outline: none;
+  border-color: #d4af37;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.modal-actions .cancel-btn {
+  flex: 1;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #8a8a9a;
+  cursor: pointer;
+}
+
+.modal-actions .confirm-btn {
+  flex: 2;
+  padding: 12px;
+  background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+  border: none;
+  border-radius: 10px;
+  color: #0a0a0f;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.modal-actions .confirm-btn:disabled {
+  background: #4a4a5a;
+  color: #8a8a9a;
+  cursor: not-allowed;
+}
+
+/* --- My Guild --- */
+.my-guild {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.guild-card {
+  background: rgba(26, 26, 38, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.guild-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.guild-card.active {
+  border-color: rgba(212, 175, 55, 0.5);
+  cursor: default;
+}
+
+.guild-banner {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(155, 89, 182, 0.2) 100%);
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.guild-icon {
+  font-size: 64px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+
+.guild-info {
+  padding: 20px;
+}
+
+.guild-info h3,
+.guild-info h4 {
+  color: #fff;
+  margin: 0 0 12px 0;
+  font-size: 20px;
+}
+
+.guild-stats {
+  display: flex;
+  gap: 16px;
+  color: #8a8a9a;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+.guild-actions {
+  display: flex;
+  gap: 12px;
+  padding: 0 20px 20px;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+  border-color: #9b59b6;
+}
+
+.action-btn.primary:hover {
+  box-shadow: 0 4px 16px rgba(155, 89, 182, 0.4);
+}
+
+/* --- Members List --- */
+.members-list {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.members-list h4 {
+  color: #8a8a9a;
+  font-size: 12px;
+  text-transform: uppercase;
+  margin: 0 0 12px 0;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.member-item:last-child {
+  border-bottom: none;
+}
+
+.member-avatar {
+  font-size: 28px;
+}
+
+.member-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.member-name {
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.member-contribution {
+  color: #8a8a9a;
+  font-size: 12px;
+}
+
+/* --- Leave Button --- */
+.leave-btn {
+  width: 100%;
+  padding: 14px;
+  background: transparent;
+  border: 1px solid rgba(231, 76, 60, 0.5);
+  border-radius: 12px;
+  color: #e74c3c;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.leave-btn:hover {
+  background: rgba(231, 76, 60, 0.1);
+}
+
+/* --- Guilds Grid --- */
+.guilds-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.guilds-grid h3 {
+  color: #8a8a9a;
+  font-size: 14px;
+  margin: 0;
+}
+
+.join-btn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 8px;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* --- Empty State --- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+  text-align: center;
+}
+
+.empty-state span:first-child {
+  font-size: 48px;
+  opacity: 0.5;
+  margin-bottom: 12px;
+}
+
+.empty-state p {
+  color: #8a8a9a;
+  margin: 0;
+}
+
+.empty-state .hint {
+  color: #d4af37;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

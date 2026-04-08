@@ -1,0 +1,284 @@
+/* ============================================
+   RESOURCE CARD — STYLES & ANIMATIONS
+   ============================================ */
+
+.resource-card {
+  position: relative;
+  background: var(--rarity-bg);
+  border: 2px solid var(--rarity-color);
+  border-radius: 16px;
+  padding: 16px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --- Size Variants --- */
+.resource-card.size-small {
+  min-width: 100px;
+  padding: 12px;
+}
+
+.resource-card.size-small .card-icon {
+  font-size: 32px;
+}
+
+.resource-card.size-small .card-name {
+  font-size: 11px;
+}
+
+.resource-card.size-large {
+  min-width: 180px;
+  padding: 20px;
+}
+
+.resource-card.size-large .card-icon {
+  font-size: 56px;
+}
+
+/* --- Glow Effect --- */
+.card-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    var(--rarity-glow) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.resource-card:hover .card-glow {
+  opacity: 1;
+}
+
+/* --- Rarity Badge --- */
+.rarity-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'Orbitron', sans-serif;
+  background: var(--rarity-color);
+  color: #0a0a0f;
+}
+
+.rarity-badge.rarity-common { background: #888; }
+.rarity-badge.rarity-rare { background: #4a9eff; }
+.rarity-badge.rarity-epic { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+.rarity-badge.rarity-legendary {
+  background: linear-gradient(135deg, #d4af37, #f4d03f);
+  animation: legendaryPulse 2s infinite;
+}
+
+/* --- Icon --- */
+.card-icon {
+  font-size: 48px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+
+.resource-card:hover .card-icon {
+  transform: scale(1.1);
+}
+
+/* --- Count Badge --- */
+.count-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* --- Info --- */
+.card-info {
+  text-align: center;
+  width: 100%;
+}
+
+.card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 6px 0;
+  line-height: 1.2;
+}
+
+.card-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.value-icon {
+  font-size: 12px;
+}
+
+.value-amount {
+  color: #d4af37;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.value-label {
+  color: #888;
+  font-size: 10px;
+}
+
+/* --- Tooltip --- */
+.card-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: rgba(10, 10, 15, 0.95);
+  border: 1px solid var(--rarity-color);
+  border-radius: 8px;
+  padding: 10px 14px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.card-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--rarity-color);
+}
+
+.resource-card:hover .card-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.tooltip-desc {
+  color: #ccc;
+  font-size: 12px;
+  margin: 0 0 4px 0;
+}
+
+.tooltip-rarity {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--rarity-color);
+  font-family: 'Orbitron', sans-serif;
+}
+
+/* --- New Badge --- */
+.new-badge {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  animation: bounce 1s infinite;
+  font-family: 'Orbitron', sans-serif;
+}
+
+/* ============================================
+   ANIMATION STATES
+   ============================================ */
+
+/* --- Spawning --- */
+.resource-card.is-spawning {
+  animation: cardSpawn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  opacity: 0;
+}
+
+/* --- Hover --- */
+.resource-card.is-hovered {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 0 30px var(--rarity-glow);
+  z-index: 10;
+}
+
+/* --- Pressed --- */
+.resource-card.is-pressed {
+  transform: scale(0.95);
+  transition: transform 0.05s ease;
+}
+
+/* --- Removing --- */
+.resource-card.is-removing {
+  animation: cardRemove 0.3s ease-out forwards;
+  pointer-events: none;
+}
+
+/* --- New Card Flash --- */
+.resource-card.is-new {
+  animation: glowPulse 0.5s ease-out;
+}
+
+/* --- Legendary Special Effects --- */
+.resource-card.rarity-legendary {
+  animation: legendaryPulse 3s infinite;
+  border-width: 3px;
+}
+
+.resource-card.rarity-legendary::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(212, 175, 55, 0.3) 50%,
+    transparent 70%
+  );
+  background-size: 200% 200%;
+  animation: epicShimmer 3s infinite linear;
+  border-radius: 16px;
+  pointer-events: none;
+}
+
+/* --- Epic Special Effects --- */
+.resource-card.rarity-epic::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    transparent 40%,
+    rgba(155, 89, 182, 0.15) 50%,
+    transparent 60%
+  );
+  border-radius: 16px;
+  pointer-events: none;
+}

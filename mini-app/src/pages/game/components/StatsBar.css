@@ -1,0 +1,162 @@
+/* ============================================
+   STATS BAR — KINGDOM DASHBOARD
+   ============================================ */
+
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, rgba(18, 18, 26, 0.9) 0%, rgba(26, 26, 38, 0.9) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.5), transparent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.stat-card:hover::before {
+  opacity: 1;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.stat-icon {
+  font-size: 36px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #8a8a9a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1;
+}
+
+/* --- Level Card Special --- */
+.level-card {
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.level-card::before {
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.8), transparent);
+}
+
+.level-value {
+  color: #d4af37;
+}
+
+.level-card.level-up {
+  animation: levelUp 0.6s ease-out;
+}
+
+.level-up-burst {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 48px;
+  animation: lightBurst 0.6s ease-out forwards;
+}
+
+/* --- Balance Card Special --- */
+.balance-value {
+  color: #d4af37;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.balance-suffix {
+  font-size: 14px;
+  color: #888;
+  font-weight: 400;
+}
+
+.balance-card.balance-up {
+  animation: countUp 0.5s ease-out;
+}
+
+.balance-card.balance-up .balance-value {
+  animation: countUp 0.5s ease-out;
+}
+
+.balance-card.balance-down {
+  animation: countDown 0.5s ease-out;
+}
+
+.balance-card.balance-down .balance-value {
+  animation: countDown 0.5s ease-out;
+}
+
+/* --- Resources Card Special --- */
+.resources-card::before {
+  background: linear-gradient(90deg, transparent, rgba(74, 158, 255, 0.8), transparent);
+}
+
+/* --- Musicians Card Special --- */
+.musicians-card::before {
+  background: linear-gradient(90deg, transparent, rgba(155, 89, 182, 0.8), transparent);
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .stat-card {
+    padding: 16px;
+  }
+  
+  .stat-icon {
+    font-size: 28px;
+  }
+  
+  .stat-value {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-bar {
+    grid-template-columns: 1fr;
+  }
+}
