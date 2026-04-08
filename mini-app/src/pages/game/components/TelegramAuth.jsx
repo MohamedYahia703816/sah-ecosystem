@@ -17,6 +17,12 @@ export default function TelegramAuth({ onAuth }) {
         // Enable closing confirmation
         tg.enableClosingConfirmation();
         
+        // Setup back button
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => {
+          tg.close();
+        });
+        
         // Get user data
         const user = tg.initDataUnsafe?.user;
         
