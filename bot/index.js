@@ -78,6 +78,51 @@ bot.on('message', (ctx) => {
   )
 })
 
+// Admin command to send update notification to all users
+bot.command('notify', async (ctx) => {
+  if (ctx.from.id !== 5379919816) {
+    return ctx.reply('⛔ This command is for admins only.')
+  }
+  
+  ctx.reply('📤 Sending update notification to all users...')
+  
+  const { data: users, error } = await supabase.from('users').select('id')
+  
+  if (error || !users || users.length === 0) {
+    return ctx.reply('❌ No users found.')
+  }
+  
+  let success = 0
+  let failed = 0
+  
+  for (const user of users) {
+    try {
+      await bot.telegram.sendMessage(
+        Number(user.id),
+        `🎉 *Kingdom Game is LIVE!*\n\n` +
+        `The wait is over! Your musical empire awaits.\n\n` +
+        `🎮 Collect instruments\n` +
+        `🤝 Trade with others\n` +
+        `👑 Join guilds & compete\n\n` +
+        `Tap below to start building your kingdom:`,
+        {
+          parse_mode: 'Markdown',
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '🎮 Play Kingdom Game', web_app: { url: `${WEBAPP_URL}/kingdom` } }],
+            ],
+          },
+        }
+      )
+      success++
+    } catch (err) {
+      failed++
+    }
+  }
+  
+  ctx.reply(`✅ Notification sent: ${success} succeeded, ${failed} failed.`)
+})
+
 // Check for app updates and notify users
 async function checkForUpdates() {
   try {
