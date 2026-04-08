@@ -62,7 +62,7 @@ export default function App() {
         <Route path="/register" element={<Register setUser={setUser} />} />
         <Route path="/dashboard" element={<ProtectedRoute user={user}><Dashboard user={user} /></ProtectedRoute>} />
         <Route path="/services"  element={<ProtectedRoute user={user}><Services  user={user} /></ProtectedRoute>} />
-        <Route path="/kingdom"    element={<ProtectedRoute user={user}><Kingdom      user={user} /></ProtectedRoute>} />
+        <Route path="/kingdom"    element={<Kingdom      user={user} />} />
       </Routes>
     </>
   );

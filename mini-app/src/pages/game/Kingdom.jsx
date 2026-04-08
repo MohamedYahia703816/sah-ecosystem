@@ -12,9 +12,18 @@ import './Animations.css';
 import './Kingdom.css';
 
 export default function Kingdom() {
-  // Telegram Auth
+  // Telegram Auth - skip login if from Telegram
   const [telegramUser, setTelegramUser] = useState(null);
   const { hapticFeedback, showAlert, isTelegram } = useTelegram();
+
+  // Auto-skip to demo mode for Telegram users
+  useEffect(() => {
+    if (isTelegram && !telegramUser) {
+      // Set demo user for Telegram
+      const demoUser = { is_telegram: true, id: 'tg_' + Date.now(), username: 'Telegram User' };
+      setTelegramUser(demoUser);
+    }
+  }, [isTelegram, telegramUser]);
 
   // Game State
   const [kingdomLevel, setKingdomLevel] = useState(1);
