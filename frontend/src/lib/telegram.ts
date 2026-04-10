@@ -52,13 +52,23 @@ export function getTelegramUser() {
 }
 
 export function getTelegramUserId(): string | null {
-  const user = getTelegramUser()
-  if (!user) {
-    console.log('getTelegramUserId: No user')
-    return null
+  // Telegram injects Telegram.WebApp automatically when opened in mini-app
+  const tg = (window as any).Telegram?.WebApp
+  
+  if (tg?.initDataUnsafe?.user) {
+    console.log('Telegram ID found:', tg.initDataUnsafe.user.id)
+    return String(tg.initDataUnsafe.user.id)
   }
-  console.log('getTelegramUserId:', user.id, user.first_name)
-  return String(user.id)
+  
+  // Fallback: check window.Telegram directly
+  const tg2 = (window as any).Telegram
+  if (tg2?.WebApp?.initDataUnsafe?.user) {
+    console.log('Telegram ID found (alt):', tg2.WebApp.initDataUnsafe.user.id)
+    return String(tg2.WebApp.initDataUnsafe.user.id)
+  }
+  
+  console.log('Telegram ID NOT found. window.Telegram:', !!tg, 'initDataUnsafe:', tg?.initDataUnsafe)
+  return null
 }
 
 export function notifyHapticFeedback(type: 'light' | 'medium' | 'heavy' = 'light') {

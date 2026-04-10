@@ -2,15 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#0A0A0B" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>SAH Music Studio</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Telegram WebApp SDK - loaded before React -->
+    <script>
+      // Initialize Telegram WebApp early
+      window.addEventListener('DOMContentLoaded', function() {
+        if (window.Telegram && window.Telegram.WebApp) {
+          console.log('Telegram WebApp detected');
+          window.Telegram.WebApp.ready();
+          window.Telegram.WebApp.expand();
+        } else {
+          console.log('Telegram WebApp NOT detected in window');
+        }
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
