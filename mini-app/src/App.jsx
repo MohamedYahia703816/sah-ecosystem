@@ -17,7 +17,30 @@ function getTelegramUser() {
 }
 
 function ProtectedRoute({ user, children }) {
-  if (!user) return <Navigate to="/dashboard" replace />;
+  // If no Telegram user, just redirect to dashboard (which will be empty but not show login)
+  if (!user) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        height: '100vh', 
+        background: 'var(--bg)',
+        color: 'var(--text)',
+        flexDirection: 'column',
+        padding: '20px',
+        textAlign: 'center'
+      }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>📱</div>
+        <p style={{ color: 'var(--text2)', fontSize: '14px' }}>
+          Please open this app from Telegram<br/>
+          <span style={{ fontSize: '12px', color: 'var(--text-dim)' }}>
+            @SonicArchitectBot
+          </span>
+        </p>
+      </div>
+    );
+  }
   return children;
 }
 
@@ -38,20 +61,8 @@ export default function App() {
       });
       setLoading(false);
     } else {
-      // Fallback for demo mode
-      const demoUser = localStorage.getItem('sah_demo');
-      if (demoUser) {
-        setUser(JSON.parse(demoUser));
-      } else {
-        const mockUser = { 
-          username: 'MusicKing', 
-          sah_balance: 1000, 
-          role: 'producer',
-          id: 'demo_1'
-        };
-        localStorage.setItem('sah_demo', JSON.stringify(mockUser));
-        setUser(mockUser);
-      }
+      // No Telegram user - show error
+      setUser(null);
       setLoading(false);
     }
   }, []);
