@@ -15,6 +15,7 @@ interface BoosterState {
 
 interface GameState {
   userId: string | null
+  username: string | null
   balance: number
   profitPerHour: number
   boostMultiplier: number
@@ -46,6 +47,7 @@ const GameContext = createContext<GameContextType | undefined>(undefined)
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<GameState>({
     userId: null,
+    username: null,
     balance: 0,
     profitPerHour: 0,
     boostMultiplier: 1.0,
@@ -69,10 +71,41 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     initTelegram()
     const userId = getTelegramUserId()
+    
+    // If no Telegram ID, use demo mode
     if (!userId) {
-      setState(prev => ({ ...prev, isLoading: false, error: 'Could not get Telegram user ID' }))
+      const demoUser = localStorage.getItem('sah_demo_user')
+      if (demoUser) {
+        const parsed = JSON.parse(demoUser)
+        setState(prev => ({ 
+          ...prev, 
+          userId: parsed.id,
+          username: parsed.username,
+          balance: parsed.balance || 0,
+          profitPerHour: parsed.profitPerHour || 0,
+          isLoading: false 
+        }))
+        return
+      }
+      // Create demo user
+      const newDemoUser = { 
+        id: 'demo_' + Date.now(), 
+        username: 'DemoUser',
+        balance: 1000,
+        profitPerHour: 10
+      }
+      localStorage.setItem('sah_demo_user', JSON.stringify(newDemoUser))
+      setState(prev => ({ 
+        ...prev, 
+        userId: newDemoUser.id,
+        username: newDemoUser.username,
+        balance: newDemoUser.balance,
+        profitPerHour: newDemoUser.profitPerHour,
+        isLoading: false 
+      }))
       return
     }
+    
     setState(prev => ({ ...prev, userId }))
     loadUserData(userId)
   }, [])
@@ -98,28 +131,32 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       const user = await getUser(userId)
 
       if (!user) {
-        // Create new user with proper error handling
+        // Create new user - try Supabase, if fail use demo mode
         console.log('Creating new user:', userId)
-        const { error: insertError } = await supabase.from('users').upsert({
-          id: userId,
-          balance: 0,
-          profit_per_hour: 0,
-          boost_multiplier: 1.0,
-          owned_genres: [],
-          last_claim: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'id' })
-        
-        if (insertError) {
-          console.error('Insert error:', insertError)
-          throw insertError
+        try {
+          const { error: insertError } = await supabase.from('users').upsert({
+            id: userId,
+            balance: 0,
+            profit_per_hour: 0,
+            boost_multiplier: 1.0,
+            owned_genres: [],
+            last_claim: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'id' })
+          
+          if (insertError) {
+            console.log('Supabase insert failed, using demo mode')
+          }
+        } catch (e) {
+          console.log('Supabase error, using demo mode')
         }
 
         setState(prev => ({
           ...prev,
-          balance: 0,
-          profitPerHour: 0,
+          username: 'Telegram User',
+          balance: 100, // Demo balance
+          profitPerHour: 5,
           boostMultiplier: 1.0,
           selectedGenre: null,
           ownedGenres: [],
