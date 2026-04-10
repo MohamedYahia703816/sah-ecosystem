@@ -71,41 +71,19 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     initTelegram()
     const userId = getTelegramUserId()
+    console.log('User ID from Telegram:', userId)
     
-    // If no Telegram ID, use demo mode
+    // If no Telegram ID, we can't proceed - show message
     if (!userId) {
-      const demoUser = localStorage.getItem('sah_demo_user')
-      if (demoUser) {
-        const parsed = JSON.parse(demoUser)
-        setState(prev => ({ 
-          ...prev, 
-          userId: parsed.id,
-          username: parsed.username,
-          balance: parsed.balance || 0,
-          profitPerHour: parsed.profitPerHour || 0,
-          isLoading: false 
-        }))
-        return
-      }
-      // Create demo user
-      const newDemoUser = { 
-        id: 'demo_' + Date.now(), 
-        username: 'DemoUser',
-        balance: 1000,
-        profitPerHour: 10
-      }
-      localStorage.setItem('sah_demo_user', JSON.stringify(newDemoUser))
       setState(prev => ({ 
         ...prev, 
-        userId: newDemoUser.id,
-        username: newDemoUser.username,
-        balance: newDemoUser.balance,
-        profitPerHour: newDemoUser.profitPerHour,
-        isLoading: false 
+        isLoading: false,
+        error: 'Please open this app from Telegram'
       }))
       return
     }
     
+    // We have Telegram ID - use it directly
     setState(prev => ({ ...prev, userId }))
     loadUserData(userId)
   }, [])

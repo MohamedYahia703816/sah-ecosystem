@@ -16,7 +16,7 @@ export function HomeScreen() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-5xl mb-4 animate-pulse">🎹</div>
-          <p className="text-text-secondary text-sm">Loading your studio...</p>
+          <p className="text-text-secondary text-sm">Loading...</p>
         </div>
       </div>
     )
@@ -56,10 +56,10 @@ export function HomeScreen() {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="glass-card p-6 text-center max-w-sm">
-          <div className="text-5xl mb-4">🎵</div>
-          <h2 className="text-lg font-semibold text-text-primary mb-2">SAH Music Studio</h2>
-          <p className="text-text-secondary text-sm mb-3">Open this app from within Telegram to start playing.</p>
-          <p className="text-xs text-text-muted">Search for the bot in Telegram and tap "Open Studio"</p>
+          <div className="text-5xl mb-4">📱</div>
+          <h2 className="text-lg font-semibold text-amber-500 mb-2">Telegram Only</h2>
+          <p className="text-text-secondary text-sm mb-3">This app works only inside Telegram.</p>
+          <p className="text-xs text-text-muted">Search for @SonicArchitectBot and tap "Open Studio"</p>
         </div>
       </div>
     )
