@@ -166,10 +166,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           lastClaim: new Date(),
           lastDailyBonus: null,
           isLoading: false,
+          // NO error - just use demo mode
         }))
         return
       }
 
+      // Continue loading user data from Supabase...
       const [inventory, boosters, tasks] = await Promise.all([
         getInventory(userId),
         getBoosters(userId),
@@ -222,7 +224,23 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (err: any) {
       console.error('Error loading user data:', err)
-      setState(prev => ({ ...prev, isLoading: false, error: err.message }))
+      // Instead of setting error, fall back to demo mode
+      setState(prev => ({
+        ...prev,
+        username: 'Telegram User',
+        balance: 100,
+        profitPerHour: 5,
+        boostMultiplier: 1.0,
+        selectedGenre: null,
+        ownedGenres: [],
+        inventory: [],
+        boosters: [],
+        completedTasks: [],
+        lastClaim: new Date(),
+        lastDailyBonus: null,
+        isLoading: false,
+        // error removed - use demo mode
+      }))
     }
   }
 

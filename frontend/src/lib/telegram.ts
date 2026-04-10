@@ -6,34 +6,47 @@ export function initTelegram() {
   if (isInitialized) return
   
   try {
+    // DEV mode - mock for development
     if (import.meta.env.DEV) {
       mockTelegramEnv({
         initData: {
           user: { id: 123456789, first_name: 'Test', username: 'testuser' },
         },
       } as any)
+      console.log('DEV mode: Telegram SDK mocked')
     }
     
+    // Try to get launch params
     const lp = retrieveLaunchParams()
     console.log('Telegram launch params:', lp)
     isInitialized = true
   } catch (e) {
-    console.warn('Telegram SDK init warning:', e)
+    // Not in Telegram environment - that's ok for testing
+    console.log('Not running in Telegram environment')
     isInitialized = true
   }
 }
 
 export function getTelegramUser() {
   try {
-    // Debug: log what's available
-    console.log('Telegram check:', window.Telegram?.WebApp?.initDataUnsafe)
-    
-    if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
-      return window.Telegram.WebApp.initDataUnsafe.user
+    // Method 1: Check window.Telegram.WebApp.initDataUnsafe (most common)
+    const tg = (window as any).Telegram?.WebApp
+    if (tg?.initDataUnsafe?.user) {
+      console.log('Found user via Telegram.WebApp:', tg.initDataUnsafe.user)
+      return tg.initDataUnsafe.user
     }
+    
+    // Method 2: Check window.Telegram directly
+    const tg2 = (window as any).Telegram
+    if (tg2?.WebApp?.initDataUnsafe?.user) {
+      console.log('Found user via Telegram:', tg2.WebApp.initDataUnsafe.user)
+      return tg2.WebApp.initDataUnsafe.user
+    }
+    
+    console.log('No Telegram user found. Available:', (window as any).Telegram)
     return null
   } catch (e) {
-    console.warn('Telegram getUser error:', e)
+    console.warn('getTelegramUser error:', e)
     return null
   }
 }
@@ -41,10 +54,10 @@ export function getTelegramUser() {
 export function getTelegramUserId(): string | null {
   const user = getTelegramUser()
   if (!user) {
-    console.log('No Telegram user found')
+    console.log('getTelegramUserId: No user')
     return null
   }
-  console.log('Telegram user found:', user.id, user.first_name)
+  console.log('getTelegramUserId:', user.id, user.first_name)
   return String(user.id)
 }
 
