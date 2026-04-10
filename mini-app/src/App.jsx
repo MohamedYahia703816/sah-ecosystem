@@ -1,15 +1,13 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { authAPI } from "./lib/api.js";
-import Login from "./pages/auth/Login.jsx";
-import Register from "./pages/auth/Register.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Services from "./pages/Services.jsx";
 import Kingdom from "./pages/game/Kingdom.jsx";
 import Navbar from "./components/Navbar.jsx";
 
 function ProtectedRoute({ user, children }) {
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/dashboard" replace />;
   return children;
 }
 
@@ -57,9 +55,7 @@ export default function App() {
     <>
       <Navbar user={user} onLogout={logout} />
       <Routes>
-        <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
-        <Route path="/login"    element={<Login    setUser={setUser} />} />
-        <Route path="/register" element={<Register setUser={setUser} />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<ProtectedRoute user={user}><Dashboard user={user} /></ProtectedRoute>} />
         <Route path="/services"  element={<ProtectedRoute user={user}><Services  user={user} /></ProtectedRoute>} />
         <Route path="/kingdom"    element={<Kingdom      user={user} />} />
