@@ -1,10 +1,20 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { authAPI } from "./lib/api.js";
 import Dashboard from "./pages/Dashboard.jsx";
 import Services from "./pages/Services.jsx";
 import Kingdom from "./pages/game/Kingdom.jsx";
 import Navbar from "./components/Navbar.jsx";
+
+function getTelegramUser() {
+  try {
+    if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
+      return window.Telegram.WebApp.initDataUnsafe.user;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 function ProtectedRoute({ user, children }) {
   if (!user) return <Navigate to="/dashboard" replace />;
@@ -16,32 +26,39 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("sah_token");
-    if (!token) { setLoading(false); return; }
-    // Demo mode: use mock user if server is not available
-    authAPI.me()
-      .then(r => setUser(r.data))
-      .catch(() => {
-        // Demo fallback - remove in production
-        const demoUser = localStorage.getItem('sah_demo');
-        if (demoUser) {
-          setUser(JSON.parse(demoUser));
-        } else {
-          const mockUser = { 
-            username: 'MusicKing', 
-            sah_balance: 1000, 
-            role: 'producer',
-            id: 'demo_1'
-          };
-          localStorage.setItem('sah_demo', JSON.stringify(mockUser));
-          setUser(mockUser);
-        }
-      })
-      .finally(() => setLoading(false));
+    // Try to get user from Telegram WebApp
+    const tgUser = getTelegramUser();
+    
+    if (tgUser) {
+      // Use Telegram user
+      setUser({
+        id: String(tgUser.id),
+        username: tgUser.username || tgUser.first_name,
+        first_name: tgUser.first_name,
+      });
+      setLoading(false);
+    } else {
+      // Fallback for demo mode
+      const demoUser = localStorage.getItem('sah_demo');
+      if (demoUser) {
+        setUser(JSON.parse(demoUser));
+      } else {
+        const mockUser = { 
+          username: 'MusicKing', 
+          sah_balance: 1000, 
+          role: 'producer',
+          id: 'demo_1'
+        };
+        localStorage.setItem('sah_demo', JSON.stringify(mockUser));
+        setUser(mockUser);
+      }
+      setLoading(false);
+    }
   }, []);
 
   const logout = () => {
     localStorage.removeItem("sah_token");
+    localStorage.removeItem("sah_demo");
     setUser(null);
   };
 
