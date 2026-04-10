@@ -17,11 +17,17 @@ export async function initUser(userId: string, username?: string, firstName?: st
 }
 
 export async function getUser(userId: string) {
+  console.log('getUser called with:', userId)
   const { data, error } = await supabase
     .from('users')
     .select('*')
     .eq('id', userId)
     .single()
+  if (error) {
+    console.error('getUser error:', error)
+  } else {
+    console.log('getUser result:', data)
+  }
   if (error && error.code !== 'PGRST116') throw error
   return data
 }

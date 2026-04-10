@@ -107,54 +107,54 @@ CREATE INDEX idx_tasks_user ON tasks(user_id);
 CREATE INDEX idx_promo_codes_code ON promo_codes(code);
 CREATE INDEX idx_leaderboard_rank ON leaderboard(rank_type, total_earned DESC);
 
--- RLS Policies
+-- RLS Policies - Allow public access for Telegram Mini App
+-- Since we use Telegram user IDs directly without Supabase Auth
+
+-- Users: Allow all operations (Telegram users are identified by their Telegram ID)
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can read users" ON users FOR SELECT USING (true);
+CREATE POLICY "Anyone can insert users" ON users FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can update users" ON users FOR UPDATE USING (true);
+
+-- Inventory: Allow all operations
 ALTER TABLE inventory ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read inventory" ON inventory FOR SELECT USING (true);
+CREATE POLICY "Anyone can insert inventory" ON inventory FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can update inventory" ON inventory FOR UPDATE USING (true);
+CREATE POLICY "Anyone can delete inventory" ON inventory FOR DELETE USING (true);
+
+-- Boosters: Allow all operations
 ALTER TABLE boosters ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read boosters" ON boosters FOR SELECT USING (true);
+CREATE POLICY "Anyone can insert boosters" ON boosters FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can update boosters" ON boosters FOR UPDATE USING (true);
+CREATE POLICY "Anyone can delete boosters" ON boosters FOR DELETE USING (true);
+
+-- Tasks: Allow all operations
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read tasks" ON tasks FOR SELECT USING (true);
+CREATE POLICY "Anyone can insert tasks" ON tasks FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can update tasks" ON tasks FOR UPDATE USING (true);
+CREATE POLICY "Anyone can delete tasks" ON tasks FOR DELETE USING (true);
+
+-- Video tasks - public read (keep existing)
 ALTER TABLE video_tasks ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read video tasks" ON video_tasks FOR SELECT USING (true);
+
+-- Promo codes - public read (keep existing)
 ALTER TABLE promo_codes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read promo codes" ON promo_codes FOR SELECT USING (is_active = true);
+
+-- Promo usage: Allow all operations
 ALTER TABLE promo_usage ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read promo usage" ON promo_usage FOR SELECT USING (true);
+CREATE POLICY "Anyone can insert promo usage" ON promo_usage FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can delete promo usage" ON promo_usage FOR DELETE USING (true);
+
+-- Leaderboard - public read (keep existing)
 ALTER TABLE leaderboard ENABLE ROW LEVEL SECURITY;
-
--- Users policies
-CREATE POLICY "Users can read own data" ON users
-  FOR SELECT USING (auth.uid()::TEXT = id OR id = current_setting('app.current_user_id', true));
-
-CREATE POLICY "Users can update own data" ON users
-  FOR UPDATE USING (auth.uid()::TEXT = id OR id = current_setting('app.current_user_id', true));
-
-CREATE POLICY "Users can insert own data" ON users
-  FOR INSERT WITH CHECK (auth.uid()::TEXT = id OR id = current_setting('app.current_user_id', true));
-
--- Inventory policies
-CREATE POLICY "Users can read own inventory" ON inventory
-  FOR SELECT USING (auth.uid()::TEXT = user_id OR user_id = current_setting('app.current_user_id', true));
-
-CREATE POLICY "Users can insert own inventory" ON inventory
-  FOR INSERT WITH CHECK (auth.uid()::TEXT = user_id OR user_id = current_setting('app.current_user_id', true));
-
--- Boosters policies
-CREATE POLICY "Users can read own boosters" ON boosters
-  FOR SELECT USING (auth.uid()::TEXT = user_id OR user_id = current_setting('app.current_user_id', true));
-
-CREATE POLICY "Users can insert/update own boosters" ON boosters
-  FOR ALL USING (auth.uid()::TEXT = user_id OR user_id = current_setting('app.current_user_id', true));
-
--- Tasks policies
-CREATE POLICY "Users can read own tasks" ON tasks
-  FOR SELECT USING (auth.uid()::TEXT = user_id OR user_id = current_setting('app.current_user_id', true));
-
-CREATE POLICY "Users can insert/update own tasks" ON tasks
-  FOR ALL USING (auth.uid()::TEXT = user_id OR user_id = current_setting('app.current_user_id', true));
-
--- Video tasks - public read
-CREATE POLICY "Anyone can read video tasks" ON video_tasks
-  FOR SELECT USING (true);
-
--- Promo codes - public read
-CREATE POLICY "Anyone can read promo codes" ON promo_codes
-  FOR SELECT USING (is_active = true);
+CREATE POLICY "Anyone can read leaderboard" ON leaderboard FOR SELECT USING (true);
 
 -- Promo usage policies
 CREATE POLICY "Users can insert promo usage" ON promo_usage

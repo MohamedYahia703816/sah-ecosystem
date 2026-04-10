@@ -98,14 +98,23 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       const user = await getUser(userId)
 
       if (!user) {
-        await supabase.from('users').insert({
+        // Create new user with proper error handling
+        console.log('Creating new user:', userId)
+        const { error: insertError } = await supabase.from('users').upsert({
           id: userId,
           balance: 0,
           profit_per_hour: 0,
           boost_multiplier: 1.0,
           owned_genres: [],
           last_claim: new Date().toISOString(),
-        })
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' })
+        
+        if (insertError) {
+          console.error('Insert error:', insertError)
+          throw insertError
+        }
 
         setState(prev => ({
           ...prev,
