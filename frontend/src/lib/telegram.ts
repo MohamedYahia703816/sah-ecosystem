@@ -25,18 +25,27 @@ export function initTelegram() {
 
 export function getTelegramUser() {
   try {
+    // Debug: log what's available
+    console.log('Telegram check:', window.Telegram?.WebApp?.initDataUnsafe)
+    
     if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
       return window.Telegram.WebApp.initDataUnsafe.user
     }
     return null
-  } catch {
+  } catch (e) {
+    console.warn('Telegram getUser error:', e)
     return null
   }
 }
 
 export function getTelegramUserId(): string | null {
   const user = getTelegramUser()
-  return user ? String(user.id) : null
+  if (!user) {
+    console.log('No Telegram user found')
+    return null
+  }
+  console.log('Telegram user found:', user.id, user.first_name)
+  return String(user.id)
 }
 
 export function notifyHapticFeedback(type: 'light' | 'medium' | 'heavy' = 'light') {
