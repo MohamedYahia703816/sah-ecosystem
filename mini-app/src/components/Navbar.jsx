@@ -38,10 +38,11 @@ export default function Navbar({ user, onLogout }) {
             </button>
           </div>
         </>}
-        {!user && <>
-          <Link to="/login"    style={{ color:"var(--text2)", textDecoration:"none", fontSize:"14px" }}>Login</Link>
-          <Link to="/register"><button className="btn-gold" style={{ padding:"8px 18px", fontSize:"13px" }}>Sign Up</button></Link>
-        </>}
+        {!user && (
+          <div style={{ color: 'var(--text2)', fontSize: '13px', fontStyle: 'italic' }}>
+            Open from Telegram
+          </div>
+        )}
       </div>
     </nav>
   );
